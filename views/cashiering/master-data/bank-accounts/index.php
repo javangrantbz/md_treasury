@@ -75,47 +75,57 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
       </div>
       <div class="modal-body">
         <div id="add-message" class="alert" style="display:none"></div>
-        <div class="row mb-3">
-          <div class="col-md-6">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Account</div>
+        <div class="row g-2">
+          <div class="col-5">
             <label class="form-label">Bank Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="add-bank_name" placeholder="Bank name">
           </div>
-          <div class="col-md-6">
+          <div class="col-5">
             <label class="form-label">Account Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="add-account_name" placeholder="Account name">
           </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col-md-5">
-            <label class="form-label">Account Number <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="add-account_number" placeholder="Account number">
-          </div>
-          <div class="col-md-3">
+          <div class="col-2">
             <label class="form-label">Currency</label>
             <select class="form-select" id="add-currency_code">
               <option value="BZD">BZD</option>
               <option value="USD">USD</option>
             </select>
           </div>
-          <div class="col-md-4">
+        </div>
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Details</div>
+        <div class="row g-2">
+          <div class="col-5">
+            <label class="form-label">Account Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="add-account_number" placeholder="Account number">
+          </div>
+          <div class="col-4">
             <label class="form-label">Account Type</label>
             <select class="form-select" id="add-account_type_id">
               <option value="">— Select Type —</option>
             </select>
           </div>
+          <div class="col-3">
+            <label class="form-label">Branch</label>
+            <input type="text" class="form-control" id="add-branch_name" placeholder="Branch">
+          </div>
         </div>
-        <div class="row mb-3">
-          <div class="col-md-4">
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Reference</div>
+        <div class="row g-2">
+          <div class="col-6">
             <label class="form-label">Item Number</label>
             <input type="text" class="form-control" id="add-item_number" placeholder="e.g. 76003">
           </div>
-          <div class="col-md-4">
+          <div class="col-6">
             <label class="form-label">SOF Number</label>
             <input type="text" class="form-control" id="add-sof_number" placeholder="e.g. 750142">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Branch Name</label>
-            <input type="text" class="form-control" id="add-branch_name" placeholder="Branch">
           </div>
         </div>
       </div>

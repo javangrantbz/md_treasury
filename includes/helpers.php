@@ -71,7 +71,7 @@ sendSecurityHeaders();
 
 function isApiRequest(): bool
 {
-    return str_contains($_SERVER['REQUEST_URI'] ?? '', '/api/');
+    return strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false;
 }
 
 function jsonResponse(array $payload, int $statusCode = 200): void
@@ -108,7 +108,7 @@ function wantsJson(): bool
     $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
     $requestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
 
-    return str_contains($accept, 'application/json')
+    return strpos($accept, 'application/json') !== false
         || strtolower($requestedWith) === 'xmlhttprequest';
 }
 

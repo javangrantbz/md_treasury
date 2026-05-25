@@ -313,7 +313,7 @@ final class Auth
             if ($hasRestrictedRole && empty($dbUser['mfa_totp_confirmed_at'])) {
                 // If on MFA setup page, let them through, otherwise force them there
                 $currentPath = $_SERVER['REQUEST_URI'] ?? '';
-                if (!str_contains($currentPath, 'mfa-setup.php') && !str_contains($currentPath, 'mfa-enroll.php') && !str_contains($currentPath, 'logout.php')) {
+                if (strpos($currentPath, 'mfa-setup.php') === false && strpos($currentPath, 'mfa-enroll.php') === false && strpos($currentPath, 'logout.php') === false) {
                     redirect(url('/views/auth/mfa-setup.php'));
                 }
             }

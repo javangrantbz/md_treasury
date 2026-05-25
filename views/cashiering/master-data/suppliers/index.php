@@ -74,52 +74,63 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
       </div>
       <div class="modal-body">
         <div id="add-message" class="alert" style="display:none"></div>
-        <div class="row">
-          <div class="col-md-8 mb-3">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Organisation</div>
+        <div class="row g-2">
+          <div class="col-7">
             <label class="form-label">Supplier Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="add-supplier_name" placeholder="Supplier name">
+            <input type="text" class="form-control" id="add-supplier_name" placeholder="Full legal name">
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-5">
             <label class="form-label">TIN</label>
             <input type="text" class="form-control" id="add-tax_id" placeholder="Tax ID / TIN">
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Contact</div>
+        <div class="row g-2">
+          <div class="col-4">
             <label class="form-label">Contact Name</label>
             <input type="text" class="form-control" id="add-contact_name" placeholder="Contact person">
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-4">
             <label class="form-label">Email</label>
             <input type="email" class="form-control" id="add-email" placeholder="Email address">
           </div>
+          <div class="col-4">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="add-phone" placeholder="Phone number">
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Phone</label>
-          <input type="text" class="form-control" id="add-phone" placeholder="Phone number">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Address Line 1</label>
-          <input type="text" class="form-control" id="add-address_line_1" placeholder="Street address">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Address Line 2</label>
-          <input type="text" class="form-control" id="add-address_line_2" placeholder="Apt, suite, etc.">
-        </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Address</div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label">Line 1</label>
+            <input type="text" class="form-control" id="add-address_line_1" placeholder="Street address">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Line 2</label>
+            <input type="text" class="form-control" id="add-address_line_2" placeholder="Apt, suite, etc.">
+          </div>
+          <div class="col-6">
             <label class="form-label">District</label>
             <input type="text" class="form-control" id="add-district" placeholder="District">
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-6">
             <label class="form-label">Country</label>
             <input type="text" class="form-control" id="add-country" placeholder="Country">
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Notes</label>
-          <textarea class="form-control" id="add-notes" rows="3" placeholder="Optional notes"></textarea>
-        </div>
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Notes</div>
+        <textarea class="form-control" id="add-notes" rows="2" placeholder="Optional notes"></textarea>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>

@@ -16,56 +16,53 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 
 
 
-    <!-- Page header -->
-    <div class="page-header d-print-none">
-        <div class="container-xl">
-            <div class="row align-items-center">
-                <div class="col">
-                    <div class="page-pretitle">Government of Belize</div>
-                    <h2 class="page-title">Treasury Department — Integrated Financial Portal</h2>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="page-body">
         <div class="container-xl">
 
-            <!-- Welcome banner -->
+            <!-- Identity + profile card -->
             <div class="card mb-4" style="border-left: 4px solid var(--tblr-primary);">
                 <div class="card-body py-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="avatar avatar-lg bg-primary text-white fw-bold position-relative" style="font-size:1.2rem;flex-shrink:0">
-                            <?php echo strtoupper(substr($authUser['first_name'] ?? 'U', 0, 1) . substr($authUser['last_name'] ?? '', 0, 1)); ?>
-                            <a href="<?php echo url('views/profile/index.php'); ?>" class="badge bg-white text-primary position-absolute bottom-0 end-0 p-1 border shadow-sm" style="transform: translate(25%, 25%);" title="Update Profile">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-inline m-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                            </a>
-                        </div>
-                        <div class="flex-fill">
-                            <div class="fw-bold fs-4 mb-0"><?php echo h($fullName); ?></div>
-                            <div class="text-muted" style="font-size:.88rem;">
-                                <?php if ($roleName): ?>
-                                    <?php echo h($roleName); ?> &mdash; <?php echo h($departmentName); ?>
-                                <?php else: ?>
-                                    <?php echo h($departmentName); ?>
-                                <?php endif; ?>
-                            </div>
-                            <div class="mt-1" style="font-size:.78rem;color:var(--tblr-secondary);">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1" style="vertical-align:-1px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-                                Last Login: <?php echo h($lastLoginFmt); ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    <div class="row align-items-center g-0">
 
-            <!-- Module heading -->
-            <div class="row mb-2 mt-2 align-items-center">
-                <div class="col">
-                    <h3 class="mb-0">System Modules</h3>
-                    <p class="text-muted mb-0" style="font-size:.85rem;">
-                        Access is governed by your assigned role and permissions.
-                    </p>
+                        <!-- Left: portal identity -->
+                        <div class="col-12 col-md-auto pe-md-4">
+                            <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">
+                                Government of Belize &middot; Ministry of Finance
+                            </div>
+                            <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Treasury Department</div>
+                            <div class="text-muted" style="font-size:.8rem;">Integrated Financial Portal</div>
+                        </div>
+
+                        <!-- Divider (desktop) -->
+                        <div class="col-auto d-none d-md-flex px-4">
+                            <div style="width:1px;height:2.8rem;background:var(--tblr-border-color);"></div>
+                        </div>
+
+                        <!-- Right: user profile -->
+                        <div class="col d-flex align-items-center gap-3 mt-3 mt-md-0">
+                            <div class="avatar avatar-md bg-primary text-white fw-bold position-relative" style="font-size:1rem;flex-shrink:0;">
+                                <?php echo strtoupper(substr($authUser['first_name'] ?? 'U', 0, 1) . substr($authUser['last_name'] ?? '', 0, 1)); ?>
+                                <a href="<?php echo url('views/profile/index.php'); ?>" class="badge bg-white text-primary position-absolute bottom-0 end-0 p-1 border shadow-sm" style="transform:translate(25%,25%);" title="Update Profile">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-inline m-0" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                </a>
+                            </div>
+                            <div>
+                                <div class="fw-bold mb-0" style="font-size:.95rem;"><?php echo h($fullName); ?></div>
+                                <div class="text-muted" style="font-size:.82rem;">
+                                    <?php if ($roleName): ?>
+                                        <?php echo h($roleName); ?> &mdash; <?php echo h($departmentName); ?>
+                                    <?php else: ?>
+                                        <?php echo h($departmentName); ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="font-size:.74rem;color:var(--tblr-secondary);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1" style="vertical-align:-1px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                                    Last Login: <?php echo h($lastLoginFmt); ?>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 

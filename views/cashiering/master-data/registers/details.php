@@ -296,7 +296,7 @@ document.getElementById('edit-department_id').addEventListener('change', functio
 });
 
 editToggleBtn.addEventListener('click', function() {
-  editMode.style.display !== 'none' ? exitEditMode() : enterEditMode();
+  editCard.style.display !== 'none' ? exitEditMode() : enterEditMode();
 });
 document.getElementById('cancel-btn').addEventListener('click', exitEditMode);
 

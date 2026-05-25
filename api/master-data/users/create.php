@@ -52,7 +52,7 @@ if ($isMicrosoft) {
     }
 }
 
-$allowedAuthSources = ['local', 'sso', 'microsoft'];
+$allowedAuthSources = ['local', 'microsoft'];
 if (!in_array($authSource, $allowedAuthSources, true)) {
     apiResponse(['success' => false, 'message' => 'Invalid auth source.'], 422);
 }

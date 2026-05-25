@@ -80,7 +80,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
           <label class="form-label">Auth Type</label>
           <select class="form-select" id="add-auth_source">
             <option value="local">Local</option>
-            <option value="sso">SSO</option>
             <option value="microsoft">Microsoft SSO</option>
           </select>
         </div>

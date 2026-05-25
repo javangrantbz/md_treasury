@@ -64,7 +64,7 @@ require_once __DIR__ . '/../../../../includes/layout-sidebar.php';
                                 <label class="form-label">Auth Source</label>
                                <select class="form-select" name="auth_source" id="auth_source">
 									<option value="local">Local</option>
-									<option value="sso">SSO</option>
+									<option value="microsoft">Microsoft SSO</option>
 								</select>
                             </div>
                         </div>

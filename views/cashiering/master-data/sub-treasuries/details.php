@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../../../includes/Auth.php';
 require_once __DIR__ . '/../../../../includes/Rbac.php';
 require_once __DIR__ . '/../../../../includes/helpers.php';
 Auth::requireAuth();
-Rbac::require($pdo, 'master_data.registers.manage');
+Rbac::require($pdo, 'master_data.sub_treasuries.manage');
 
 $id = (int)($_GET['id'] ?? 0);
 
@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="container-xl">
 
       <?php if ($id <= 0): ?>
-        <div class="alert alert-danger">Invalid register ID.</div>
+        <div class="alert alert-danger">Invalid sub-treasury ID.</div>
       <?php else: ?>
 
         <!-- Page identity card -->
@@ -23,10 +23,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
           <div class="card-body py-3">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Registers</div>
+                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Sub-Treasuries</div>
                 <div class="fw-bold" id="page-subtitle" style="font-size:1.05rem;line-height:1.2;">Loading...</div>
               </div>
-              <a href="<?= url('views/cashiering/master-data/registers/index.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Back to Registers</a>
+              <a href="<?= url('views/cashiering/master-data/sub-treasuries/index.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Back to Sub-Treasuries</a>
             </div>
           </div>
         </div>
@@ -46,17 +46,19 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <!-- View mode -->
             <dl class="row mb-0" id="view-mode">
               <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Code</dt>
-              <dd class="col-sm-9 mb-2" id="v-register_code">—</dd>
+              <dd class="col-sm-9 mb-2" id="v-sub_treasury_code">—</dd>
               <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Name</dt>
-              <dd class="col-sm-9 mb-2" id="v-register_name">—</dd>
+              <dd class="col-sm-9 mb-2" id="v-sub_treasury_name">—</dd>
               <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Department</dt>
               <dd class="col-sm-9 mb-2" id="v-department_name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Sub-Treasury</dt>
-              <dd class="col-sm-9 mb-2" id="v-sub_treasury_name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Assigned User</dt>
-              <dd class="col-sm-9 mb-2" id="v-assigned_user">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Description</dt>
-              <dd class="col-sm-9 mb-2" id="v-description">—</dd>
+              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">District</dt>
+              <dd class="col-sm-9 mb-2" id="v-district">—</dd>
+              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Address</dt>
+              <dd class="col-sm-9 mb-2" id="v-address_line">—</dd>
+              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Phone</dt>
+              <dd class="col-sm-9 mb-2" id="v-contact_phone">—</dd>
+              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Email</dt>
+              <dd class="col-sm-9 mb-2" id="v-contact_email">—</dd>
               <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Status</dt>
               <dd class="col-sm-9 mb-0" id="v-is_active">—</dd>
             </dl>
@@ -64,32 +66,35 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <!-- Edit mode -->
             <div id="edit-mode" style="display:none;">
               <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">Register Code</label>
-                  <input type="text" class="form-control" id="edit-register_code" readonly>
-                  <div class="form-text">Code is auto-generated and cannot be changed.</div>
-                </div>
-                <div class="col-md-8">
-                  <label class="form-label">Register Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="edit-register_name" placeholder="Register name">
+                <div class="col-md-6">
+                  <label class="form-label">Sub-Treasury Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-sub_treasury_name" placeholder="Sub-treasury name">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Department <span class="text-danger">*</span></label>
+                  <label class="form-label">Sub-Treasury Code</label>
+                  <input type="text" class="form-control" id="edit-sub_treasury_code" placeholder="e.g. ST-001">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Department</label>
                   <select class="form-select" id="edit-department_id">
                     <option value="">— Select Department —</option>
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Sub-Treasury</label>
-                  <select class="form-select" id="edit-sub_treasury_id">
-                    <option value="">— Select Sub-Treasury —</option>
-                  </select>
+                  <label class="form-label">District</label>
+                  <input type="text" class="form-control" id="edit-district" placeholder="District">
                 </div>
-                <div class="col-md-8">
-                  <label class="form-label">Assigned User</label>
-                  <select class="form-select" id="edit-assigned_user_id">
-                    <option value="">— Select User —</option>
-                  </select>
+                <div class="col-12">
+                  <label class="form-label">Address</label>
+                  <input type="text" class="form-control" id="edit-address_line" placeholder="Street address">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Contact Phone</label>
+                  <input type="text" class="form-control" id="edit-contact_phone" placeholder="Phone number">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Contact Email</label>
+                  <input type="email" class="form-control" id="edit-contact_email" placeholder="Email address">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Status</label>
@@ -97,10 +102,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
                     <option value="1">Active</option>
                     <option value="0">Inactive</option>
                   </select>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" id="edit-description" rows="2" placeholder="Optional description"></textarea>
                 </div>
               </div>
               <div class="mt-3 d-flex gap-2">
@@ -117,11 +118,9 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 
 <script>
 var RECORD_ID  = <?= $id ?>;
-var SHOW_URL   = "<?= url('api/master-data/registers/show.php') ?>";
-var UPDATE_URL = "<?= url('api/master-data/registers/update.php') ?>";
+var SHOW_URL   = "<?= url('api/master-data/sub-treasuries/show.php') ?>";
+var UPDATE_URL = "<?= url('api/master-data/sub-treasuries/update.php') ?>";
 var DEPT_URL   = "<?= url('api/master-data/departments/list.php') ?>";
-var ST_URL     = "<?= url('api/master-data/sub-treasuries/list.php') ?>";
-var USERS_URL  = "<?= url('api/master-data/users/list.php') ?>";
 
 function showMsg(id, msg, type) {
   type = type || 'danger';
@@ -148,15 +147,15 @@ async function loadRecord() {
     var res = await apiGet(SHOW_URL + '?id=' + RECORD_ID);
     var r = res.data;
     recordData = r;
-    document.getElementById('record-heading').textContent       = r.register_name || 'Register';
-    document.getElementById('page-subtitle').textContent        = r.register_name || 'Register Details';
-    document.getElementById('v-register_code').textContent      = r.register_code || '—';
-    document.getElementById('v-register_name').textContent      = r.register_name || '—';
-    document.getElementById('v-department_name').textContent    = r.department_name || '—';
+    document.getElementById('record-heading').textContent       = r.sub_treasury_name || 'Sub-Treasury';
+    document.getElementById('page-subtitle').textContent        = r.sub_treasury_name || 'Sub-Treasury Details';
+    document.getElementById('v-sub_treasury_code').textContent  = r.sub_treasury_code || '—';
     document.getElementById('v-sub_treasury_name').textContent  = r.sub_treasury_name || '—';
-    var user = r.assigned_user_name ? r.assigned_user_name + (r.assigned_username ? ' (' + r.assigned_username + ')' : '') : '—';
-    document.getElementById('v-assigned_user').textContent      = user;
-    document.getElementById('v-description').textContent        = r.description || '—';
+    document.getElementById('v-department_name').textContent    = r.department_name || '—';
+    document.getElementById('v-district').textContent           = r.district || '—';
+    document.getElementById('v-address_line').textContent       = r.address_line || '—';
+    document.getElementById('v-contact_phone').textContent      = r.contact_phone || '—';
+    document.getElementById('v-contact_email').textContent      = r.contact_email || '—';
     document.getElementById('v-is_active').innerHTML            = isActiveBadge(r.is_active);
   } catch (e) {
     showMsg('page-message', e.message);
@@ -178,53 +177,20 @@ async function loadDepts(selectedId) {
   } catch(e) {}
 }
 
-async function loadSubTreasuries(deptId, selectedId) {
-  var sel = document.getElementById('edit-sub_treasury_id');
-  sel.innerHTML = '<option value="">— Select Sub-Treasury —</option>';
-  if (!deptId) return;
-  try {
-    var res = await apiGet(ST_URL + '?department_id=' + deptId);
-    (res.data || []).forEach(function(s) {
-      var opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.sub_treasury_name;
-      if (selectedId && String(s.id) === String(selectedId)) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  } catch(e) {}
-}
-
-async function loadUsers(selectedId) {
-  try {
-    var res = await apiGet(USERS_URL + '?status=active');
-    var sel = document.getElementById('edit-assigned_user_id');
-    sel.innerHTML = '<option value="">— Select User —</option>';
-    (res.data || []).forEach(function(u) {
-      var opt = document.createElement('option');
-      opt.value = u.id;
-      opt.textContent = ((u.first_name || '') + ' ' + (u.last_name || '')).trim() + ' (' + u.username + ')';
-      if (selectedId && String(u.id) === String(selectedId)) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  } catch(e) {}
-}
-
 var editToggleBtn = document.getElementById('edit-toggle-btn');
 var viewMode      = document.getElementById('view-mode');
 var editMode      = document.getElementById('edit-mode');
 
 function enterEditMode() {
   if (recordData) {
-    document.getElementById('edit-register_code').value = recordData.register_code || '';
-    document.getElementById('edit-register_name').value = recordData.register_name || '';
-    document.getElementById('edit-description').value   = recordData.description || '';
-    document.getElementById('edit-is_active').value     = String(recordData.is_active) === '1' ? '1' : '0';
-    loadDepts(recordData.department_id).then(function() {
-      if (recordData.department_id) {
-        loadSubTreasuries(recordData.department_id, recordData.sub_treasury_id);
-      }
-    });
-    loadUsers(recordData.assigned_user_id);
+    document.getElementById('edit-sub_treasury_name').value = recordData.sub_treasury_name || '';
+    document.getElementById('edit-sub_treasury_code').value = recordData.sub_treasury_code || '';
+    document.getElementById('edit-district').value          = recordData.district || '';
+    document.getElementById('edit-address_line').value      = recordData.address_line || '';
+    document.getElementById('edit-contact_phone').value     = recordData.contact_phone || '';
+    document.getElementById('edit-contact_email').value     = recordData.contact_email || '';
+    document.getElementById('edit-is_active').value         = String(recordData.is_active) === '1' ? '1' : '0';
+    loadDepts(recordData.department_id);
   }
   viewMode.style.display = 'none';
   editMode.style.display = '';
@@ -240,10 +206,6 @@ function exitEditMode() {
   clearMsg('edit-message');
 }
 
-document.getElementById('edit-department_id').addEventListener('change', function() {
-  loadSubTreasuries(this.value, null);
-});
-
 editToggleBtn.addEventListener('click', function() {
   editMode.style.display !== 'none' ? exitEditMode() : enterEditMode();
 });
@@ -255,17 +217,19 @@ document.getElementById('save-btn').addEventListener('click', async function() {
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     await apiPost(UPDATE_URL, {
-      id:               RECORD_ID,
-      register_name:    document.getElementById('edit-register_name').value,
-      department_id:    document.getElementById('edit-department_id').value,
-      sub_treasury_id:  document.getElementById('edit-sub_treasury_id').value,
-      assigned_user_id: document.getElementById('edit-assigned_user_id').value,
-      description:      document.getElementById('edit-description').value,
-      is_active:        document.getElementById('edit-is_active').value,
+      id:                RECORD_ID,
+      sub_treasury_name: document.getElementById('edit-sub_treasury_name').value,
+      sub_treasury_code: document.getElementById('edit-sub_treasury_code').value,
+      department_id:     document.getElementById('edit-department_id').value,
+      district:          document.getElementById('edit-district').value,
+      address_line:      document.getElementById('edit-address_line').value,
+      contact_phone:     document.getElementById('edit-contact_phone').value,
+      contact_email:     document.getElementById('edit-contact_email').value,
+      is_active:         document.getElementById('edit-is_active').value,
     });
     exitEditMode();
     await loadRecord();
-    showMsg('page-message', 'Register updated successfully.', 'success');
+    showMsg('page-message', 'Sub-treasury updated successfully.', 'success');
     setTimeout(function() { clearMsg('page-message'); }, 3000);
   } catch (e) {
     showMsg('edit-message', e.message);

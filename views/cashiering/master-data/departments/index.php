@@ -53,33 +53,29 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 .tag-dropdown .tag-opt.disabled { color: var(--tblr-secondary); cursor: default; font-style: italic; }
 </style>
 
-  <div class="page-header d-print-none">
-    <div class="container-xl">
-      <div class="row align-items-center">
-        <div class="col">
-          <div class="page-pretitle">Cashiering — Master Data</div>
-          <h2 class="page-title">Departments</h2>
-        </div>
-        <div class="col-auto ms-auto d-flex gap-2">
-          <a href="<?= url('views/cashiering/dashboard.php') ?>" class="btn btn-outline-secondary btn-sm">← Cashiering</a>
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-add">Add Department</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="page-body">
     <div class="container-xl">
-      <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <div class="d-flex gap-2 align-items-center">
-            <input type="text" id="search-input" class="form-control form-control-sm w-auto" placeholder="Search...">
-            <div id="stats-area" class="d-flex gap-2 ms-2">
+
+      <!-- Page identity card -->
+      <div class="card mb-3" style="border-left: 4px solid var(--tblr-primary);">
+        <div class="card-body py-3">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="me-auto">
+              <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Cashiering &middot; Master Data</div>
+              <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Departments</div>
+            </div>
+            <input type="text" id="search-input" class="form-control form-control-sm" style="max-width:200px;" placeholder="Search...">
+            <div id="stats-area" class="d-flex gap-2">
               <span class="badge bg-success-lt">Active: 0</span>
               <span class="badge bg-secondary-lt">Inactive: 0</span>
             </div>
+            <a href="<?= url('views/cashiering/dashboard.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Cashiering</a>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-add">Add Department</button>
           </div>
         </div>
+      </div>
+
+      <div class="card">
         <div class="card-body p-0">
           <div id="table-message" class="alert m-3" style="display:none"></div>
           <table class="table table-vcenter table-hover card-table">

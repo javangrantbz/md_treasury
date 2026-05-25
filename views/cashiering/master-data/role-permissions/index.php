@@ -9,22 +9,22 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-header.php';
 require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 ?>
 
-  <div class="page-header d-print-none">
-    <div class="container-xl">
-      <div class="row align-items-center">
-        <div class="col">
-          <div class="page-pretitle">Cashiering — Master Data</div>
-          <h2 class="page-title">Role Permissions</h2>
-        </div>
-        <div class="col-auto ms-auto">
-          <a href="<?= url('views/cashiering/dashboard.php') ?>" class="btn btn-outline-secondary btn-sm">← Cashiering</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="page-body">
     <div class="container-xl">
+
+      <!-- Page identity card -->
+      <div class="card mb-3" style="border-left: 4px solid var(--tblr-primary);">
+        <div class="card-body py-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Cashiering &middot; Master Data</div>
+              <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Role Permissions</div>
+            </div>
+            <a href="<?= url('views/cashiering/dashboard.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Cashiering</a>
+          </div>
+        </div>
+      </div>
+
       <div class="alert alert-info mb-3">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12.01" y2="8"/><polyline points="11 12 12 12 12 16 13 16"/></svg>
         Select a role on the left to view and edit its permissions. Changes are saved immediately when you click <strong>Save Permissions</strong>.

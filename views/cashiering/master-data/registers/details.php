@@ -56,70 +56,60 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
                 <div id="h-user_count" style="font-size:.85rem;">—</div>
               </div>
 
-              <a href="<?= url('views/cashiering/master-data/registers/index.php') ?>" class="btn btn-outline-secondary btn-sm ms-auto">&#8592; Back to Registers</a>
+              <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-primary btn-sm" id="edit-toggle-btn">Edit</button>
+                <a href="<?= url('views/cashiering/master-data/registers/index.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Back</a>
+              </div>
             </div>
           </div>
         </div>
 
         <div id="page-message" class="alert mb-3" style="display:none;"></div>
 
-        <!-- Register info -->
-        <div class="card mb-3">
+        <!-- Edit form — hidden until Edit is clicked -->
+        <div class="card mb-3" id="edit-card" style="display:none;">
           <div class="card-header">
-            <h3 class="card-title">Register Details</h3>
-            <div class="card-options">
-              <button class="btn btn-sm btn-primary" id="edit-toggle-btn">Edit</button>
-            </div>
+            <h3 class="card-title">Edit Register</h3>
           </div>
           <div class="card-body">
             <div id="edit-message" class="alert mb-3" style="display:none;"></div>
-
-            <!-- View mode -->
-            <div id="view-mode">
-              <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.6rem;letter-spacing:.07em;">Description</div>
-              <div id="v-description" class="text-muted" style="font-size:.875rem;">—</div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Register Code</label>
+                <input type="text" class="form-control" id="edit-register_code" readonly>
+                <div class="form-text">Auto-generated, cannot be changed.</div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Register Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="edit-register_name" placeholder="Register name">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Department <span class="text-danger">*</span></label>
+                <select class="form-select" id="edit-department_id">
+                  <option value="">— Select Department —</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Sub-Treasury</label>
+                <select class="form-select" id="edit-sub_treasury_id">
+                  <option value="">— Select Sub-Treasury —</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="edit-is_active">
+                  <option value="1">Active</option>
+                  <option value="0">Inactive</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="edit-description" rows="2" placeholder="Optional description"></textarea>
+              </div>
             </div>
-
-            <!-- Edit mode -->
-            <div id="edit-mode" style="display:none;">
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">Register Code</label>
-                  <input type="text" class="form-control" id="edit-register_code" readonly>
-                  <div class="form-text">Code is auto-generated and cannot be changed.</div>
-                </div>
-                <div class="col-md-8">
-                  <label class="form-label">Register Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="edit-register_name" placeholder="Register name">
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Department <span class="text-danger">*</span></label>
-                  <select class="form-select" id="edit-department_id">
-                    <option value="">— Select Department —</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Sub-Treasury</label>
-                  <select class="form-select" id="edit-sub_treasury_id">
-                    <option value="">— Select Sub-Treasury —</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Status</label>
-                  <select class="form-select" id="edit-is_active">
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" id="edit-description" rows="2" placeholder="Optional description"></textarea>
-                </div>
-              </div>
-              <div class="mt-3 d-flex gap-2">
-                <button class="btn btn-primary" id="save-btn">Save Changes</button>
-                <button class="btn btn-outline-secondary" id="cancel-btn">Cancel</button>
-              </div>
+            <div class="mt-3 d-flex gap-2">
+              <button class="btn btn-primary" id="save-btn">Save Changes</button>
+              <button class="btn btn-outline-secondary" id="cancel-btn">Cancel</button>
             </div>
           </div>
         </div>
@@ -274,8 +264,7 @@ async function loadSubTreasuries(deptId, selectedId) {
 }
 
 var editToggleBtn = document.getElementById('edit-toggle-btn');
-var viewMode      = document.getElementById('view-mode');
-var editMode      = document.getElementById('edit-mode');
+var editCard      = document.getElementById('edit-card');
 
 function enterEditMode() {
   if (recordData) {
@@ -289,15 +278,13 @@ function enterEditMode() {
       }
     });
   }
-  viewMode.style.display = 'none';
-  editMode.style.display = '';
+  editCard.style.display = '';
   editToggleBtn.textContent = 'Cancel';
   editToggleBtn.className = 'btn btn-sm btn-outline-secondary';
 }
 
 function exitEditMode() {
-  editMode.style.display = 'none';
-  viewMode.style.display = '';
+  editCard.style.display = 'none';
   editToggleBtn.textContent = 'Edit';
   editToggleBtn.className = 'btn btn-sm btn-primary';
   clearMsg('edit-message');

@@ -319,6 +319,7 @@ editToggleBtn.addEventListener('click', () => {
 document.getElementById('cancel-btn').addEventListener('click', exitEditMode);
 
 document.getElementById('save-btn').addEventListener('click', async () => {
+  if (!deptData) { showMsg('edit-message', 'Data not loaded yet. Please reload the page.'); return; }
   clearMsg('edit-message');
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';

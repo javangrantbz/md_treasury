@@ -20,77 +20,80 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 
         <!-- Page identity card -->
         <div class="card mb-3" style="border-left: 4px solid var(--tblr-primary);">
-          <div class="card-body py-3">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Departments</div>
-                <div class="fw-bold" id="page-subtitle" style="font-size:1.05rem;line-height:1.2;">Loading...</div>
+          <div class="card-body py-2">
+            <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Departments</div>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+              <!-- Code + Name + Description -->
+              <div style="min-width:140px;">
+                <div class="text-muted" style="font-size:.72rem;font-family:monospace;" id="h-code">—</div>
+                <div class="fw-bold" style="font-size:1rem;line-height:1.25;" id="h-name">Loading...</div>
+                <div class="text-muted" style="font-size:.78rem;margin-top:.15rem;" id="h-description"></div>
               </div>
-              <a href="<?= url('views/cashiering/master-data/departments/index.php') ?>" class="btn btn-outline-secondary btn-sm">← Back to Departments</a>
+
+              <div style="width:1px;align-self:stretch;background:var(--tblr-border-color);"></div>
+
+              <!-- Ministry / Short Name / Status -->
+              <div class="d-flex gap-3 flex-wrap">
+                <div>
+                  <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Ministry</div>
+                  <div style="font-size:.85rem;" id="h-ministry">—</div>
+                </div>
+                <div>
+                  <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Short Name</div>
+                  <div style="font-size:.85rem;" id="h-short-name">—</div>
+                </div>
+                <div>
+                  <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Status</div>
+                  <div id="h-status">—</div>
+                </div>
+              </div>
+
+              <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-primary btn-sm" id="edit-toggle-btn">Edit</button>
+                <a href="<?= url('views/cashiering/master-data/departments/index.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Back</a>
+              </div>
             </div>
           </div>
         </div>
 
         <div id="page-message" class="alert mb-3" style="display:none;"></div>
 
-        <!-- Department info -->
-        <div class="card mb-3">
+        <!-- Edit form — hidden until Edit is clicked -->
+        <div class="card mb-3" id="edit-card" style="display:none;">
           <div class="card-header">
-            <h3 class="card-title" id="dept-heading">Loading...</h3>
-            <div class="card-options">
-              <button class="btn btn-sm btn-primary" id="edit-toggle-btn">Edit</button>
-            </div>
+            <h3 class="card-title">Edit Department</h3>
           </div>
           <div class="card-body">
             <div id="edit-message" class="alert mb-3" style="display:none;"></div>
-
-            <!-- View mode -->
-            <dl class="row mb-0" id="view-mode">
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Code</dt>
-              <dd class="col-sm-9 mb-2" id="v-code">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Name</dt>
-              <dd class="col-sm-9 mb-2" id="v-name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Ministry</dt>
-              <dd class="col-sm-9 mb-2" id="v-ministry">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Short Name</dt>
-              <dd class="col-sm-9 mb-2" id="v-short-name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Description</dt>
-              <dd class="col-sm-9 mb-2" id="v-description">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Status</dt>
-              <dd class="col-sm-9 mb-0" id="v-status">—</dd>
-            </dl>
-
-            <!-- Edit mode -->
-            <div id="edit-mode" style="display:none;">
-              <div class="row g-3">
-                <div class="col-md-8">
-                  <label class="form-label">Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="edit-name">
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Short Name</label>
-                  <input type="text" class="form-control" id="edit-short-name" placeholder="e.g. MOF">
-                </div>
-                <div class="col-md-8">
-                  <label class="form-label">Ministry</label>
-                  <input type="text" class="form-control" id="edit-ministry">
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Status</label>
-                  <select class="form-select" id="edit-status">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" id="edit-description" rows="2"></textarea>
-                </div>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="edit-name">
               </div>
-              <div class="mt-3 d-flex gap-2">
-                <button class="btn btn-primary" id="save-btn">Save Changes</button>
-                <button class="btn btn-outline-secondary" id="cancel-btn">Cancel</button>
+              <div class="col-md-4">
+                <label class="form-label">Short Name</label>
+                <input type="text" class="form-control" id="edit-short-name" placeholder="e.g. MOF">
               </div>
+              <div class="col-md-8">
+                <label class="form-label">Ministry</label>
+                <input type="text" class="form-control" id="edit-ministry">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="edit-status">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="edit-description" rows="2"></textarea>
+              </div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+              <button class="btn btn-primary" id="save-btn">Save Changes</button>
+              <button class="btn btn-outline-secondary" id="cancel-btn">Cancel</button>
             </div>
           </div>
         </div>
@@ -221,15 +224,12 @@ async function loadDetails() {
   const banks = d.bank_accounts || [];
   const ccs   = d.cost_centers  || [];
 
-  document.getElementById('dept-heading').textContent  = deptData.name ?? 'Department';
-  document.getElementById('page-subtitle').textContent = deptData.name ?? 'Department Details';
-
-  document.getElementById('v-code').textContent        = deptData.code          ?? '—';
-  document.getElementById('v-name').textContent        = deptData.name          ?? '—';
-  document.getElementById('v-ministry').textContent    = deptData.ministry_name ?? '—';
-  document.getElementById('v-short-name').textContent  = deptData.short_name    ?? '—';
-  document.getElementById('v-description').textContent = deptData.description   ?? '—';
-  document.getElementById('v-status').innerHTML        = statusBadge(deptData.status);
+  document.getElementById('h-code').textContent        = deptData.code          || '—';
+  document.getElementById('h-name').textContent        = deptData.name          || 'Department';
+  document.getElementById('h-ministry').textContent    = deptData.ministry_name || '—';
+  document.getElementById('h-short-name').textContent  = deptData.short_name    || '—';
+  document.getElementById('h-description').textContent = deptData.description   || '';
+  document.getElementById('h-status').innerHTML        = statusBadge(deptData.status);
 
   // Bank accounts
   const bankTbody = document.getElementById('bank-tbody');
@@ -289,33 +289,31 @@ async function loadDetails() {
 
 // View / Edit toggle
 const editToggleBtn = document.getElementById('edit-toggle-btn');
-const viewMode      = document.getElementById('view-mode');
-const editMode      = document.getElementById('edit-mode');
+const editCard      = document.getElementById('edit-card');
 
 function enterEditMode() {
   if (deptData) {
-    document.getElementById('edit-name').value        = deptData.name          ?? '';
-    document.getElementById('edit-short-name').value  = deptData.short_name    ?? '';
-    document.getElementById('edit-ministry').value    = deptData.ministry_name ?? '';
-    document.getElementById('edit-status').value      = deptData.status        ?? 'active';
-    document.getElementById('edit-description').value = deptData.description   ?? '';
+    document.getElementById('edit-name').value        = deptData.name          || '';
+    document.getElementById('edit-short-name').value  = deptData.short_name    || '';
+    document.getElementById('edit-ministry').value    = deptData.ministry_name || '';
+    document.getElementById('edit-status').value      = deptData.status        || 'active';
+    document.getElementById('edit-description').value = deptData.description   || '';
   }
-  viewMode.style.display = 'none';
-  editMode.style.display = '';
+  editCard.style.display = '';
+  editCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   editToggleBtn.textContent = 'Cancel';
-  editToggleBtn.className = 'btn btn-sm btn-outline-secondary';
+  editToggleBtn.className = 'btn btn-secondary btn-sm';
 }
 
 function exitEditMode() {
-  editMode.style.display = 'none';
-  viewMode.style.display = '';
+  editCard.style.display = 'none';
   editToggleBtn.textContent = 'Edit';
-  editToggleBtn.className = 'btn btn-sm btn-primary';
+  editToggleBtn.className = 'btn btn-primary btn-sm';
   clearMsg('edit-message');
 }
 
 editToggleBtn.addEventListener('click', () => {
-  editMode.style.display !== 'none' ? exitEditMode() : enterEditMode();
+  editCard.style.display !== 'none' ? exitEditMode() : enterEditMode();
 });
 
 document.getElementById('cancel-btn').addEventListener('click', exitEditMode);

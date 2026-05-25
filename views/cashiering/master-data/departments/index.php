@@ -9,6 +9,8 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 ?>
 
 <style>
+#table-body td { padding-top: .3rem; padding-bottom: .3rem; font-size: .875rem; }
+
 .tag-selector {
   display: flex;
   flex-wrap: wrap;
@@ -165,97 +167,12 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
   </div>
 </div>
 
-<!-- ══════════════════ VIEW MODAL ══════════════════ -->
-<div class="modal modal-blur fade" id="modal-view" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Department Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <dl class="row" id="view-body"><!-- populated by JS --></dl>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="view-edit-btn">Edit</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ EDIT MODAL ══════════════════ -->
-<div class="modal modal-blur fade" id="modal-edit" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Department</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="edit-message" class="alert" style="display:none"></div>
-        <input type="hidden" id="edit-id">
-        <input type="hidden" id="edit-code">
-        <div class="mb-3">
-          <label class="form-label">Name <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="edit-name" placeholder="Department name">
-        </div>
-        <div class="row mb-3">
-          <div class="col-md-5">
-            <label class="form-label">Ministry</label>
-            <input type="text" class="form-control" id="edit-ministry_name" placeholder="Ministry name">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Short Name</label>
-            <input type="text" class="form-control" id="edit-short_name" placeholder="e.g. MOF">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Status</label>
-            <select class="form-select" id="edit-status">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" id="edit-description" rows="2" placeholder="Optional description"></textarea>
-        </div>
-
-        <hr class="my-3">
-
-        <div class="mb-3">
-          <label class="form-label">Bank Accounts</label>
-          <div class="tag-selector" id="edit-bank-selector">
-            <input type="text" placeholder="Search bank accounts…" id="edit-bank-input" autocomplete="off">
-            <div class="tag-dropdown" id="edit-bank-dropdown" style="display:none"></div>
-          </div>
-        </div>
-        <div class="mb-1">
-          <label class="form-label">Cost Centers</label>
-          <div class="tag-selector" id="edit-cc-selector">
-            <input type="text" placeholder="Search cost centers…" id="edit-cc-input" autocomplete="off">
-            <div class="tag-dropdown" id="edit-cc-dropdown" style="display:none"></div>
-          </div>
-        </div>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="edit-save-btn">Update</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 const LIST_URL    = "<?= url('api/master-data/departments/list.php') ?>";
-const SHOW_URL    = "<?= url('api/master-data/departments/show.php') ?>";
-const DETAILS_URL = "<?= url('api/master-data/departments/details.php') ?>";
 const CREATE_URL  = "<?= url('api/master-data/departments/create.php') ?>";
-const UPDATE_URL  = "<?= url('api/master-data/departments/update.php') ?>";
 const BA_LIST_URL = "<?= url('api/master-data/bank-accounts/list.php') ?>";
 const CC_LIST_URL = "<?= url('api/master-data/cost-centers/list.php') ?>";
+const DEPT_PAGE   = "<?= url('views/cashiering/master-data/departments/details.php') ?>";
 
 let allRows = [];
 let allBankAccounts = [];
@@ -326,8 +243,6 @@ function makeTagSelector(selectorId, inputId, dropdownId, getOptions, getSelecte
 // ── State ────────────────────────────────────────────────────────────────────
 let addBankSelected = [];
 let addCcSelected   = [];
-let editBankSelected = [];
-let editCcSelected   = [];
 
 const addBankSel = makeTagSelector(
   'add-bank-selector', 'add-bank-input', 'add-bank-dropdown',
@@ -336,14 +251,6 @@ const addBankSel = makeTagSelector(
 const addCcSel = makeTagSelector(
   'add-cc-selector', 'add-cc-input', 'add-cc-dropdown',
   () => allCostCenters, () => addCcSelected, v => { addCcSelected = v; }
-);
-const editBankSel = makeTagSelector(
-  'edit-bank-selector', 'edit-bank-input', 'edit-bank-dropdown',
-  () => allBankAccounts, () => editBankSelected, v => { editBankSelected = v; }
-);
-const editCcSel = makeTagSelector(
-  'edit-cc-selector', 'edit-cc-input', 'edit-cc-dropdown',
-  () => allCostCenters, () => editCcSelected, v => { editCcSelected = v; }
 );
 
 // ── Load reference data ───────────────────────────────────────────────────────
@@ -430,10 +337,7 @@ function renderRow(r) {
     </td>
     <td>${statusBadge(r.status)}</td>
     <td>
-      <div class="d-flex gap-1 justify-content-end">
-        <button class="btn btn-sm btn-outline-secondary" onclick="openView(${r.id})">View</button>
-        <button class="btn btn-sm btn-outline-primary"   onclick="openEdit(${r.id})">Edit</button>
-      </div>
+      <a href="${DEPT_PAGE}?id=${r.id}" class="btn btn-sm btn-outline-secondary">Open →</a>
     </td>
   </tr>`;
 }
@@ -441,97 +345,6 @@ function renderRow(r) {
 function renderTable(rows) {
   window.pager.setData(rows);
 }
-
-// ── View ─────────────────────────────────────────────────────────────────────
-async function openView(id) {
-  document.getElementById('view-body').innerHTML = '<dd class="col-12 text-muted">Loading...</dd>';
-  document.getElementById('view-edit-btn').onclick = () => {
-    tabler.Modal.getInstance(document.getElementById('modal-view'))?.hide();
-    openEdit(id);
-  };
-  tabler.Modal.getOrCreateInstance(document.getElementById('modal-view')).show();
-  try {
-    const res = await apiGet(DETAILS_URL + '?id=' + id);
-    const d   = res.data;
-    const r   = d.department;
-    const banks = (d.bank_accounts || []).map(b => `${b.bank_name} — ${b.account_name} (${b.account_number})`).join('<br>') || '—';
-    const ccs   = (d.cost_centers  || []).map(c => `${c.name} (${c.code})`).join('<br>') || '—';
-    document.getElementById('view-body').innerHTML =
-      `<dt class="col-sm-4">Code</dt><dd class="col-sm-8">${r.code ?? '—'}</dd>` +
-      `<dt class="col-sm-4">Name</dt><dd class="col-sm-8">${r.name ?? '—'}</dd>` +
-      `<dt class="col-sm-4">Ministry</dt><dd class="col-sm-8">${r.ministry_name ?? '—'}</dd>` +
-      `<dt class="col-sm-4">Short Name</dt><dd class="col-sm-8">${r.short_name ?? '—'}</dd>` +
-	  `<dt class="col-sm-4">Status</dt><dd class="col-sm-8">${statusBadge(r.status)}</dd>` +
-      `<dt class="col-sm-4">Description</dt><dd class="col-sm-8">${r.description ?? '—'}</dd>` +
-      `<dt class="col-sm-4">Bank Accounts</dt><dd class="col-sm-8">${banks}</dd>` +
-      `<dt class="col-sm-4">Cost Centers</dt><dd class="col-sm-8">${ccs}</dd>`;
-  } catch (e) {
-    document.getElementById('view-body').innerHTML = `<dd class="col-12 text-danger">${e.message}</dd>`;
-  }
-}
-
-// ── Edit ─────────────────────────────────────────────────────────────────────
-async function openEdit(id) {
-  clearMsg('edit-message');
-  editBankSelected = [];
-  editCcSelected   = [];
-  editBankSel.renderTags();
-  editCcSel.renderTags();
-  document.getElementById('edit-id').value = id;
-  tabler.Modal.getOrCreateInstance(document.getElementById('modal-edit')).show();
-  try {
-    const res = await apiGet(DETAILS_URL + '?id=' + id);
-    const d   = res.data;
-    const r   = d.department;
-    document.getElementById('edit-code').value          = r.code ?? '';
-    document.getElementById('edit-name').value          = r.name ?? '';
-    document.getElementById('edit-ministry_name').value = r.ministry_name ?? '';
-    document.getElementById('edit-short_name').value    = r.short_name ?? '';
-    document.getElementById('edit-description').value   = r.description ?? '';
-    document.getElementById('edit-status').value        = r.status ?? 'active';
-
-    // Pre-populate bank accounts
-    editBankSelected = (d.bank_accounts || []).map(b => ({
-      id: b.bank_account_id,
-      label: `${b.bank_name} — ${b.account_name} (${b.account_number})`,
-    }));
-    editBankSel.renderTags();
-
-    // Pre-populate cost centers
-    editCcSelected = (d.cost_centers || []).map(c => ({
-      id: c.id,
-      label: `${c.name} (${c.code})`,
-    }));
-    editCcSel.renderTags();
-  } catch (e) {
-    showMsg('edit-message', e.message);
-  }
-}
-
-document.getElementById('edit-save-btn').addEventListener('click', async () => {
-  clearMsg('edit-message');
-  const btn = document.getElementById('edit-save-btn');
-  btn.disabled = true; btn.textContent = 'Updating...';
-  try {
-    await apiPost(UPDATE_URL, {
-      id:              document.getElementById('edit-id').value,
-      code:            document.getElementById('edit-code').value,
-      name:            document.getElementById('edit-name').value,
-      ministry_name:   document.getElementById('edit-ministry_name').value,
-      short_name:      document.getElementById('edit-short_name').value,
-      description:     document.getElementById('edit-description').value,
-      status:          document.getElementById('edit-status').value,
-      bank_account_ids: editBankSelected.map(s => s.id),
-      cost_center_ids:  editCcSelected.map(s => s.id),
-    });
-    tabler.Modal.getInstance(document.getElementById('modal-edit'))?.hide();
-    loadRows(document.getElementById('search-input').value);
-  } catch (e) {
-    showMsg('edit-message', e.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Update';
-  }
-});
 
 // ── Add ───────────────────────────────────────────────────────────────────────
 document.getElementById('add-save-btn').addEventListener('click', async () => {

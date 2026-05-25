@@ -3,10 +3,6 @@ declare(strict_types=1);
 
 final class MicrosoftAuth
 {
-    private const TENANT_ID = ENV_MICROSOFT_TENANT_ID;
-    private const CLIENT_ID = ENV_MICROSOFT_CLIENT_ID;
-    private const CLIENT_SECRET = ENV_MICROSOFT_CLIENT_SECRET;
-
     /**
      * Generate the Microsoft Login URL.
      */
@@ -16,7 +12,7 @@ final class MicrosoftAuth
         $_SESSION['microsoft_oauth_state'] = $state;
 
         $params = [
-            'client_id'     => self::CLIENT_ID,
+            'client_id'     => ENV_MICROSOFT_CLIENT_ID,
             'response_type' => 'code',
             'redirect_uri'  => $redirectUri,
             'response_mode' => 'query',
@@ -25,7 +21,7 @@ final class MicrosoftAuth
             'prompt'        => 'select_account'
         ];
 
-        return "https://login.microsoftonline.com/" . self::TENANT_ID . "/oauth2/v2.0/authorize?" . http_build_query($params);
+        return "https://login.microsoftonline.com/" . ENV_MICROSOFT_TENANT_ID . "/oauth2/v2.0/authorize?" . http_build_query($params);
     }
 
     /**
@@ -40,10 +36,10 @@ final class MicrosoftAuth
         unset($_SESSION['microsoft_oauth_state']);
 
         // 2. Exchange Code for Token
-        $tokenUrl = "https://login.microsoftonline.com/" . self::TENANT_ID . "/oauth2/v2.0/token";
+        $tokenUrl = "https://login.microsoftonline.com/" . ENV_MICROSOFT_TENANT_ID . "/oauth2/v2.0/token";
         $postData = [
-            'client_id'     => self::CLIENT_ID,
-            'client_secret' => self::CLIENT_SECRET,
+            'client_id'     => ENV_MICROSOFT_CLIENT_ID,
+            'client_secret' => ENV_MICROSOFT_CLIENT_SECRET,
             'code'          => $code,
             'redirect_uri'  => $redirectUri,
             'grant_type'    => 'authorization_code',

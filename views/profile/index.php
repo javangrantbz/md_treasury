@@ -11,6 +11,7 @@ $dept       = $u['department_name'] ?? null;
 $lastLogin  = $u['last_login_at'] ?? null;
 $lastLoginFmt = $lastLogin ? date('d M Y, g:i A', strtotime($lastLogin)) : 'First session';
 $sessionType  = ($u['user_type'] ?? 'internal') === 'internal' ? 'Internal' : 'External';
+$isMicrosoft  = ($u['auth_source'] ?? '') === 'microsoft';
 
 require_once __DIR__ . '/../../includes/layout-tabler-header.php';
 require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
@@ -94,31 +95,48 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
             <div class="card-header">
               <h3 class="card-title">Personal Information</h3>
               <div class="card-options">
-                <span class="text-muted" style="font-size:.8rem;">Fields marked read-only require administrator access to change</span>
+                <?php if ($isMicrosoft): ?>
+                  <span class="badge bg-azure-lt text-azure" style="font-size:.72rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="14" height="14" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+                    Managed by Microsoft Entra ID
+                  </span>
+                <?php else: ?>
+                  <span class="text-muted" style="font-size:.8rem;">Fields marked read-only require administrator access to change</span>
+                <?php endif; ?>
               </div>
             </div>
             <div class="card-body">
+              <?php if (!$isMicrosoft): ?>
               <div id="profile-message" class="alert mb-3" style="display:none"></div>
+              <?php endif; ?>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label">First Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="first_name" value="<?= h($u['first_name'] ?? '') ?>">
+                  <label class="form-label d-flex align-items-center gap-1">
+                    First Name
+                    <?php if ($isMicrosoft): ?><span class="badge bg-secondary-lt text-secondary ms-1" style="font-size:.68rem;">Read-only</span><?php endif; ?>
+                  </label>
+                  <input type="text" class="form-control<?= $isMicrosoft ? ' bg-light' : '' ?>" id="first_name" value="<?= h($u['first_name'] ?? '') ?>"<?= $isMicrosoft ? ' readonly tabindex="-1"' : '' ?>>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="last_name" value="<?= h($u['last_name'] ?? '') ?>">
+                  <label class="form-label d-flex align-items-center gap-1">
+                    Last Name
+                    <?php if ($isMicrosoft): ?><span class="badge bg-secondary-lt text-secondary ms-1" style="font-size:.68rem;">Read-only</span><?php endif; ?>
+                  </label>
+                  <input type="text" class="form-control<?= $isMicrosoft ? ' bg-light' : '' ?>" id="last_name" value="<?= h($u['last_name'] ?? '') ?>"<?= $isMicrosoft ? ' readonly tabindex="-1"' : '' ?>>
                 </div>
+                <?php if (!$isMicrosoft): ?>
                 <div class="col-md-6">
                   <label class="form-label">Phone</label>
                   <input type="text" class="form-control" id="phone" value="<?= h($u['phone'] ?? '') ?>" placeholder="e.g. +501 600 0000">
                 </div>
+                <?php endif; ?>
                 <div class="col-md-6">
                   <label class="form-label d-flex align-items-center gap-1">
                     Email
                     <span class="badge bg-secondary-lt text-secondary ms-1" style="font-size:.68rem;">Read-only</span>
                   </label>
                   <input type="email" class="form-control bg-light" value="<?= h($u['email'] ?? '') ?>" readonly tabindex="-1">
-                  <div class="form-hint">Contact an administrator to change your email address.</div>
+                  <?php if (!$isMicrosoft): ?><div class="form-hint">Contact an administrator to change your email address.</div><?php endif; ?>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label d-flex align-items-center gap-1">
@@ -128,13 +146,16 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
                   <input type="text" class="form-control bg-light" value="<?= h($u['username'] ?? '') ?>" readonly tabindex="-1">
                 </div>
               </div>
+              <?php if (!$isMicrosoft): ?>
               <div class="mt-3">
                 <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
               </div>
+              <?php endif; ?>
             </div>
           </div>
 
-          <!-- Change Password -->
+          <!-- Change Password (local auth only) -->
+          <?php if (!$isMicrosoft): ?>
           <div class="card mb-4">
             <div class="card-header">
               <h3 class="card-title">Change Password</h3>
@@ -162,6 +183,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               </div>
             </div>
           </div>
+          <?php endif; ?>
 
           <!-- Role & Access (read-only) -->
           <div class="card">
@@ -211,12 +233,14 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
   </div>
 
 <script>
+<?php if (!$isMicrosoft): ?>
 const PROFILE_UPDATE_URL = "<?= url('api/profile/update.php') ?>";
 const CHANGE_PW_URL      = "<?= url('api/profile/change-password.php') ?>";
 
-function showMsg(id, msg, type = 'danger') {
-  const el = document.getElementById(id);
-  el.className = `alert alert-${type}`;
+function showMsg(id, msg, type) {
+  type = type || 'danger';
+  var el = document.getElementById(id);
+  el.className = 'alert alert-' + type;
   el.textContent = msg;
   el.style.display = 'block';
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -225,12 +249,12 @@ function hideMsg(id) {
   document.getElementById(id).style.display = 'none';
 }
 
-document.getElementById('save-profile-btn').addEventListener('click', async () => {
+document.getElementById('save-profile-btn').addEventListener('click', async function() {
   hideMsg('profile-message');
-  const btn = document.getElementById('save-profile-btn');
+  var btn = document.getElementById('save-profile-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const res = await fetch(PROFILE_UPDATE_URL, {
+    var res = await fetch(PROFILE_UPDATE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -239,21 +263,21 @@ document.getElementById('save-profile-btn').addEventListener('click', async () =
         phone:      document.getElementById('phone').value,
       }),
     });
-    const data = await res.json();
+    var data = await res.json();
     showMsg('profile-message', data.message, data.success ? 'success' : 'danger');
-  } catch {
+  } catch (e) {
     showMsg('profile-message', 'Network error. Please try again.');
   } finally {
     btn.disabled = false; btn.textContent = 'Save Changes';
   }
 });
 
-document.getElementById('change-pw-btn').addEventListener('click', async () => {
+document.getElementById('change-pw-btn').addEventListener('click', async function() {
   hideMsg('pw-message');
-  const btn = document.getElementById('change-pw-btn');
+  var btn = document.getElementById('change-pw-btn');
   btn.disabled = true; btn.textContent = 'Updating...';
   try {
-    const res = await fetch(CHANGE_PW_URL, {
+    var res = await fetch(CHANGE_PW_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -262,19 +286,20 @@ document.getElementById('change-pw-btn').addEventListener('click', async () => {
         confirm_password: document.getElementById('confirm_password').value,
       }),
     });
-    const data = await res.json();
+    var data = await res.json();
     showMsg('pw-message', data.message, data.success ? 'success' : 'danger');
     if (data.success) {
       document.getElementById('current_password').value = '';
       document.getElementById('new_password').value     = '';
       document.getElementById('confirm_password').value = '';
     }
-  } catch {
+  } catch (e) {
     showMsg('pw-message', 'Network error. Please try again.');
   } finally {
     btn.disabled = false; btn.textContent = 'Change Password';
   }
 });
+<?php endif; ?>
 </script>
 
 <?php require_once __DIR__ . '/../../includes/layout-tabler-footer.php'; ?>

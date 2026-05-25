@@ -29,132 +29,60 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
         <span style="font-size:.85rem;">Live data will populate once the NSB database integration is connected. Figures below are placeholders.</span>
       </div>
 
-      <!-- Card Applications row -->
-      <div class="row mb-2">
-        <div class="col">
-          <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.72rem;letter-spacing:.08em;">Card Applications</div>
-        </div>
-      </div>
-      <div class="row row-cards g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-xl-5">
+      <!-- Combined stats row -->
+      <div class="card mb-4">
+        <div class="d-flex flex-wrap" style="overflow-x:auto;">
 
-        <div class="col">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Total Applications</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <!-- Group: Card Applications -->
+          <div class="d-flex flex-column flex-shrink-0" style="min-width:0;">
+            <div class="px-3 pt-2 pb-1 text-uppercase fw-semibold text-muted" style="font-size:.63rem;letter-spacing:.08em;white-space:nowrap;">Card Applications</div>
+            <div class="d-flex">
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">New</div>
+                <div class="fw-bold text-azure" style="font-size:1.35rem;line-height:1;">—</div>
               </div>
-              <div class="display-6 fw-bold text-muted">—</div>
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Approved</div>
+                <div class="fw-bold text-success" style="font-size:1.35rem;line-height:1;">—</div>
+              </div>
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Shipped</div>
+                <div class="fw-bold text-cyan" style="font-size:1.35rem;line-height:1;">—</div>
+              </div>
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Activated</div>
+                <div class="fw-bold text-green" style="font-size:1.35rem;line-height:1;">—</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="col">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">New Applications</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-azure)" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <!-- Divider -->
+          <div class="border-start my-3"></div>
+
+          <!-- Group: Accounts & Transactions -->
+          <div class="d-flex flex-column flex-shrink-0" style="min-width:0;">
+            <div class="px-3 pt-2 pb-1 text-uppercase fw-semibold text-muted" style="font-size:.63rem;letter-spacing:.08em;white-space:nowrap;">Accounts &amp; Transactions</div>
+            <div class="d-flex">
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Active Accounts</div>
+                <div class="fw-bold" style="font-size:1.35rem;line-height:1;">—</div>
               </div>
-              <div class="display-6 fw-bold text-muted">—</div>
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Deposits</div>
+                <div class="fw-bold text-success" style="font-size:1.35rem;line-height:1;">—</div>
+              </div>
+              <div class="px-3 pb-3 pt-1 border-end">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Withdrawals</div>
+                <div class="fw-bold text-danger" style="font-size:1.35rem;line-height:1;">—</div>
+              </div>
+              <div class="px-3 pb-3 pt-1">
+                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Net Balance</div>
+                <div class="fw-bold text-primary" style="font-size:1.35rem;line-height:1;">—</div>
+              </div>
             </div>
           </div>
+
         </div>
-
-        <div class="col">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Approved</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Shipped</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-cyan)" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Activated</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Accounts & Ledger row -->
-      <div class="row mb-2">
-        <div class="col">
-          <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.72rem;letter-spacing:.08em;">Accounts &amp; Transactions</div>
-        </div>
-      </div>
-      <div class="row row-cards g-3 mb-4">
-
-        <div class="col-sm-6 col-lg-3">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Active Accounts</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-primary)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-sm-6 col-lg-3">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Total Deposits</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-success)" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-sm-6 col-lg-3">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Total Withdrawals</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-danger)" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-sm-6 col-lg-3">
-          <div class="card">
-            <div class="card-body py-3">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="text-muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">Net Balance</div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-primary)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              </div>
-              <div class="display-6 fw-bold text-muted">—</div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- Quick access -->

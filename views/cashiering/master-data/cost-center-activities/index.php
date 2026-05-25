@@ -65,6 +65,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add Activity</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -95,18 +99,9 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
           <label class="form-label">Description</label>
           <textarea class="form-control" id="add-description" rows="3" placeholder="Optional description"></textarea>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Default Amount</label>
-            <input type="number" step="0.01" class="form-control" id="add-default_amount" placeholder="0.00">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Status</label>
-            <select class="form-select" id="add-is_active">
-              <option value="1">Active</option>
-              <option value="0">Inactive</option>
-            </select>
-          </div>
+        <div class="mb-3">
+          <label class="form-label">Default Amount</label>
+          <input type="number" step="0.01" class="form-control" id="add-default_amount" placeholder="0.00">
         </div>
       </div>
       <div class="modal-footer">
@@ -195,7 +190,7 @@ document.getElementById('add-save-btn').addEventListener('click', async function
       revenue_code:   document.getElementById('add-revenue_code').value,
       description:    document.getElementById('add-description').value,
       default_amount: document.getElementById('add-default_amount').value,
-      is_active:      document.getElementById('add-is_active').value,
+      is_active:      document.getElementById('add-active-check').checked ? 1 : 0,
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();
@@ -212,7 +207,9 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', function() {
   clearMsg('add-message');
+  document.getElementById('add-active-check').checked = true;
   document.getElementById('modal-add').querySelectorAll('input,select,textarea').forEach(function(el) {
+    if (el.type === 'checkbox') return;
     el.value = el.tagName === 'SELECT' ? (el.options[0] ? el.options[0].value : '') : '';
   });
 });

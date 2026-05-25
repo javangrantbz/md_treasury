@@ -66,6 +66,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add User</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -120,17 +124,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
               <option value="local">Local</option>
               <option value="sso">SSO</option>
               <option value="microsoft">Microsoft SSO</option>
-            </select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Status</label>
-            <select class="form-select" id="add-status">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="pending">Pending</option>
-              <option value="locked">Locked</option>
             </select>
           </div>
         </div>
@@ -228,7 +221,7 @@ document.getElementById('add-save-btn').addEventListener('click', async function
       role_id:          document.getElementById('add-role_id').value,
       user_type:        document.getElementById('add-user_type').value,
       auth_source:      document.getElementById('add-auth_source').value,
-      status:           document.getElementById('add-status').value,
+      status:           document.getElementById('add-active-check').checked ? 'active' : 'inactive',
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();
@@ -241,7 +234,9 @@ document.getElementById('add-save-btn').addEventListener('click', async function
 
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', function() {
   clearMsg('add-message');
+  document.getElementById('add-active-check').checked = true;
   document.getElementById('modal-add').querySelectorAll('input,select,textarea').forEach(function(el) {
+    if (el.type === 'checkbox') return;
     el.value = el.tagName === 'SELECT' ? (el.options[0] ? el.options[0].value : '') : '';
   });
 });

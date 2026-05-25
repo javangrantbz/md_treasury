@@ -66,6 +66,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add Cost Center</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -97,13 +101,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
         <div class="mb-3">
           <label class="form-label">Description</label>
           <textarea class="form-control" id="add-description" rows="3" placeholder="Optional description"></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select" id="add-status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
         </div>
       </div>
       <div class="modal-footer">
@@ -233,7 +230,7 @@ document.getElementById('add-save-btn').addEventListener('click', async function
       department_id:   document.getElementById('add-department_id').value,
       sub_treasury_id: document.getElementById('add-sub_treasury_id').value,
       description:     document.getElementById('add-description').value,
-      status:          document.getElementById('add-status').value,
+      status:          document.getElementById('add-active-check').checked ? 'active' : 'inactive',
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();
@@ -250,8 +247,11 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', function() {
   clearMsg('add-message');
-  document.getElementById('modal-add').querySelectorAll('input,textarea').forEach(function(el) { el.value = ''; });
-  document.getElementById('add-status').value = 'active';
+  document.getElementById('add-active-check').checked = true;
+  document.getElementById('modal-add').querySelectorAll('input,textarea').forEach(function(el) {
+    if (el.type === 'checkbox') return;
+    el.value = '';
+  });
   document.getElementById('add-department_id').value = '';
   document.getElementById('add-sub_treasury_id').innerHTML = '<option value="">— Select Department first —</option>';
 });

@@ -66,22 +66,17 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add Register</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div id="add-message" class="alert" style="display:none"></div>
-        <div class="row mb-3">
-          <div class="col-md-8">
-            <label class="form-label">Register Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="add-register_name" placeholder="Register name">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Status</label>
-            <select class="form-select" id="add-is_active">
-              <option value="1">Active</option>
-              <option value="0">Inactive</option>
-            </select>
-          </div>
+        <div class="mb-3">
+          <label class="form-label">Register Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="add-register_name" placeholder="Register name">
         </div>
         <div class="row mb-3">
           <div class="col-md-6">
@@ -232,7 +227,7 @@ document.getElementById('add-save-btn').addEventListener('click', async function
       sub_treasury_id:  document.getElementById('add-sub_treasury_id').value,
       assigned_user_id: document.getElementById('add-assigned_user_id').value,
       description:      document.getElementById('add-description').value,
-      is_active:        document.getElementById('add-is_active').value,
+      is_active:        document.getElementById('add-active-check').checked ? 1 : 0,
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();
@@ -249,10 +244,10 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', function() {
   clearMsg('add-message');
+  document.getElementById('add-active-check').checked = true;
   document.getElementById('add-register_name').value = '';
   document.getElementById('add-description').value   = '';
   document.getElementById('add-department_id').value = '';
-  document.getElementById('add-is_active').value     = '1';
   document.getElementById('add-assigned_user_id').value = '';
   populateSubTreasurySelect('add', '');
 });

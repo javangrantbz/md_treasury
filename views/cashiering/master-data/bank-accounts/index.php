@@ -67,6 +67,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add Bank Account</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -113,13 +117,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <label class="form-label">Branch Name</label>
             <input type="text" class="form-control" id="add-branch_name" placeholder="Branch">
           </div>
-        </div>
-        <div class="mb-2">
-          <label class="form-label">Status</label>
-          <select class="form-select" id="add-status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
         </div>
       </div>
       <div class="modal-footer">
@@ -215,7 +212,7 @@ document.getElementById('add-save-btn').addEventListener('click', async function
       item_number:     document.getElementById('add-item_number').value,
       sof_number:      document.getElementById('add-sof_number').value,
       branch_name:     document.getElementById('add-branch_name').value,
-      status:          document.getElementById('add-status').value,
+      status:          document.getElementById('add-active-check').checked ? 'active' : 'inactive',
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();
@@ -232,10 +229,13 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', function() {
   clearMsg('add-message');
-  document.getElementById('modal-add').querySelectorAll('input').forEach(function(el) { el.value = ''; });
+  document.getElementById('add-active-check').checked = true;
+  document.getElementById('modal-add').querySelectorAll('input').forEach(function(el) {
+    if (el.type === 'checkbox') return;
+    el.value = '';
+  });
   document.getElementById('add-currency_code').value   = 'BZD';
   document.getElementById('add-account_type_id').value = '';
-  document.getElementById('add-status').value          = 'active';
 });
 
 document.addEventListener('DOMContentLoaded', function() {

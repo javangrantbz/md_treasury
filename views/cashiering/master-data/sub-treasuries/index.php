@@ -65,6 +65,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add Sub-Treasury</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -104,13 +108,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <label class="form-label">Contact Email</label>
             <input type="email" class="form-control" id="add-contact_email" placeholder="Email address">
           </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select" id="add-is_active">
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
-          </select>
         </div>
       </div>
       <div class="modal-footer">
@@ -200,7 +197,7 @@ document.getElementById('add-save-btn').addEventListener('click', async function
       address_line:      document.getElementById('add-address_line').value,
       contact_phone:     document.getElementById('add-contact_phone').value,
       contact_email:     document.getElementById('add-contact_email').value,
-      is_active:         document.getElementById('add-is_active').value,
+      is_active:         document.getElementById('add-active-check').checked ? 1 : 0,
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();
@@ -217,8 +214,11 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', function() {
   clearMsg('add-message');
-  document.getElementById('modal-add').querySelectorAll('input,textarea').forEach(function(el) { el.value = ''; });
-  document.getElementById('add-is_active').value = '1';
+  document.getElementById('add-active-check').checked = true;
+  document.getElementById('modal-add').querySelectorAll('input,textarea').forEach(function(el) {
+    if (el.type === 'checkbox') return;
+    el.value = '';
+  });
   document.getElementById('add-department_id').value = '';
 });
 

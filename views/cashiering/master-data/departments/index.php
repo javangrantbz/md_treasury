@@ -107,6 +107,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add Department</h5>
+        <label class="form-check d-flex align-items-center gap-1 me-2 mb-0">
+          <input class="form-check-input m-0" type="checkbox" id="add-active-check" checked>
+          <span class="form-check-label" style="font-size:.8125rem;">Active</span>
+        </label>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -129,14 +133,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
           <label class="form-label">Description</label>
           <textarea class="form-control" id="add-description" rows="2" placeholder="Optional description"></textarea>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Status</label>
-          <select class="form-select" id="add-status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-
         <hr class="my-3">
 
         <div class="mb-3">
@@ -353,7 +349,7 @@ document.getElementById('add-save-btn').addEventListener('click', async () => {
       ministry_name:   document.getElementById('add-ministry_name').value,
       short_name:      document.getElementById('add-short_name').value,
       description:     document.getElementById('add-description').value,
-      status:          document.getElementById('add-status').value,
+      status:          document.getElementById('add-active-check').checked ? 'active' : 'inactive',
       bank_account_ids: addBankSelected.map(s => s.id),
       cost_center_ids:  addCcSelected.map(s => s.id),
     });
@@ -369,8 +365,9 @@ document.getElementById('add-save-btn').addEventListener('click', async () => {
 // ── Reset add modal on close ──────────────────────────────────────────────────
 document.getElementById('modal-add').addEventListener('hidden.bs.modal', () => {
   clearMsg('add-message');
+  document.getElementById('add-active-check').checked = true;
   document.getElementById('modal-add').querySelectorAll('input,select,textarea').forEach(el => {
-    if (el.id === 'add-bank-input' || el.id === 'add-cc-input') return;
+    if (el.type === 'checkbox' || el.id === 'add-bank-input' || el.id === 'add-cc-input') return;
     el.value = el.tagName === 'SELECT' ? (el.options[0]?.value ?? '') : '';
   });
   addBankSel.reset();

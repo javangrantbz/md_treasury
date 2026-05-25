@@ -75,67 +75,83 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
       <div class="modal-body">
         <div id="add-message" class="alert" style="display:none"></div>
 
-        <!-- Auth Type first so it controls what follows -->
-        <div class="mb-3">
-          <label class="form-label">Auth Type</label>
-          <select class="form-select" id="add-auth_source">
+        <!-- Auth -->
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="text-uppercase fw-semibold text-muted" style="font-size:.63rem;letter-spacing:.08em;white-space:nowrap;">Auth Type</div>
+          <select class="form-select form-select-sm" id="add-auth_source" style="max-width:160px;">
             <option value="local">Local</option>
             <option value="microsoft">Microsoft SSO</option>
           </select>
+          <div id="add-ms-notice" style="display:none;font-size:.78rem;" class="text-info d-flex align-items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 21 21" style="flex-shrink:0"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+            Name &amp; username sync on first login
+          </div>
         </div>
 
-        <!-- Microsoft notice -->
-        <div id="add-ms-notice" class="alert alert-info py-2 mb-3" style="display:none;font-size:.82rem;">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="14" height="14" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
-          Name and username will be populated automatically on the user's first Microsoft login.
-        </div>
+        <hr style="margin:.5rem 0 .65rem;">
 
-        <!-- Local/SSO only fields -->
+        <!-- Identity (local only) -->
         <div id="add-local-fields">
-          <div class="row">
-            <div class="col-md-6 mb-3">
+          <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Identity</div>
+          <div class="row g-2">
+            <div class="col-3">
               <label class="form-label">First Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="add-first_name" placeholder="First name">
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-3">
               <label class="form-label">Last Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="add-last_name" placeholder="Last name">
             </div>
+            <div class="col-3">
+              <label class="form-label">Username <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="add-username" placeholder="Username">
+            </div>
+            <div class="col-3">
+              <label class="form-label">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="add-email" placeholder="Email">
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Username <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="add-username" placeholder="Username">
-          </div>
+          <hr style="margin:.65rem 0;">
         </div>
 
-        <!-- Email (always shown) -->
-        <div class="mb-3">
-          <label class="form-label">Email <span class="text-danger">*</span></label>
-          <input type="email" class="form-control" id="add-email" placeholder="Email address">
+        <!-- Email (microsoft only) -->
+        <div id="add-ms-email-field" style="display:none;">
+          <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Identity</div>
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="add-email-ms" placeholder="Entra email address">
+            </div>
+          </div>
+          <hr style="margin:.65rem 0;">
         </div>
 
-        <!-- Password (local/SSO only) -->
+        <!-- Credentials (local only) -->
         <div id="add-password-fields">
-          <div class="row">
-            <div class="col-md-6 mb-3">
+          <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Credentials</div>
+          <div class="row g-2">
+            <div class="col-6">
               <label class="form-label">Password <span class="text-danger">*</span></label>
               <input type="password" class="form-control" id="add-password" placeholder="Password">
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-6">
               <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
               <input type="password" class="form-control" id="add-confirm_password" placeholder="Confirm password">
             </div>
           </div>
+          <hr style="margin:.65rem 0;">
         </div>
 
-        <div class="row">
-          <div class="col-md-6 mb-3">
+        <!-- Access -->
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Access</div>
+        <div class="row g-2">
+          <div class="col-6">
             <label class="form-label">Role</label>
             <select class="form-select" id="add-role_id">
               <option value="">— No Role —</option>
             </select>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-6">
             <label class="form-label">User Type</label>
             <select class="form-select" id="add-user_type">
               <option value="internal">Internal</option>
@@ -184,6 +200,7 @@ function applyAuthToggle(authSource) {
   document.getElementById('add-local-fields').style.display    = isMs ? 'none' : '';
   document.getElementById('add-password-fields').style.display = isMs ? 'none' : '';
   document.getElementById('add-ms-notice').style.display       = isMs ? '' : 'none';
+  document.getElementById('add-ms-email-field').style.display  = isMs ? '' : 'none';
 }
 
 document.getElementById('add-auth_source').addEventListener('change', function() {
@@ -238,13 +255,14 @@ document.getElementById('add-save-btn').addEventListener('click', async function
   var btn = document.getElementById('add-save-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
+    var isMs = document.getElementById('add-auth_source').value === 'microsoft';
     await apiPost(CREATE_URL, {
-      first_name:       document.getElementById('add-first_name').value,
-      last_name:        document.getElementById('add-last_name').value,
-      username:         document.getElementById('add-username').value,
-      email:            document.getElementById('add-email').value,
-      password:         document.getElementById('add-password').value,
-      confirm_password: document.getElementById('add-confirm_password').value,
+      first_name:       isMs ? '' : document.getElementById('add-first_name').value,
+      last_name:        isMs ? '' : document.getElementById('add-last_name').value,
+      username:         isMs ? '' : document.getElementById('add-username').value,
+      email:            isMs ? document.getElementById('add-email-ms').value : document.getElementById('add-email').value,
+      password:         isMs ? '' : document.getElementById('add-password').value,
+      confirm_password: isMs ? '' : document.getElementById('add-confirm_password').value,
       role_id:          document.getElementById('add-role_id').value,
       user_type:        document.getElementById('add-user_type').value,
       auth_source:      document.getElementById('add-auth_source').value,
@@ -266,6 +284,7 @@ document.getElementById('modal-add').addEventListener('hidden.bs.modal', functio
     if (el.type === 'checkbox') return;
     el.value = el.tagName === 'SELECT' ? (el.options[0] ? el.options[0].value : '') : '';
   });
+  document.getElementById('add-email-ms').value = '';
   applyAuthToggle('local');
 });
 

@@ -20,13 +20,43 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 
         <!-- Page identity card -->
         <div class="card mb-3" style="border-left: 4px solid var(--tblr-primary);">
-          <div class="card-body py-3">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Registers</div>
-                <div class="fw-bold" id="page-subtitle" style="font-size:1.05rem;line-height:1.2;">Loading...</div>
+          <div class="card-body py-2">
+            <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Registers</div>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+              <!-- Code + Name -->
+              <div style="min-width:140px;">
+                <div class="text-muted" style="font-size:.72rem;font-family:monospace;" id="h-register_code">—</div>
+                <div class="fw-bold" style="font-size:1rem;line-height:1.25;" id="h-register_name">Loading...</div>
               </div>
-              <a href="<?= url('views/cashiering/master-data/registers/index.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Back to Registers</a>
+
+              <div style="width:1px;align-self:stretch;background:var(--tblr-border-color);"></div>
+
+              <!-- Department / Sub-Treasury / Status -->
+              <div class="d-flex gap-3 flex-wrap">
+                <div>
+                  <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Department</div>
+                  <div style="font-size:.85rem;" id="h-department_name">—</div>
+                </div>
+                <div>
+                  <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Sub-Treasury</div>
+                  <div style="font-size:.85rem;" id="h-sub_treasury_name">—</div>
+                </div>
+                <div>
+                  <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Status</div>
+                  <div id="h-is_active">—</div>
+                </div>
+              </div>
+
+              <div style="width:1px;align-self:stretch;background:var(--tblr-border-color);"></div>
+
+              <!-- User count -->
+              <div>
+                <div class="text-uppercase text-muted fw-semibold" style="font-size:.6rem;letter-spacing:.07em;">Users</div>
+                <div id="h-user_count" style="font-size:.85rem;">—</div>
+              </div>
+
+              <a href="<?= url('views/cashiering/master-data/registers/index.php') ?>" class="btn btn-outline-secondary btn-sm ms-auto">&#8592; Back to Registers</a>
             </div>
           </div>
         </div>
@@ -36,7 +66,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
         <!-- Register info -->
         <div class="card mb-3">
           <div class="card-header">
-            <h3 class="card-title" id="record-heading">Loading...</h3>
+            <h3 class="card-title">Register Details</h3>
             <div class="card-options">
               <button class="btn btn-sm btn-primary" id="edit-toggle-btn">Edit</button>
             </div>
@@ -45,20 +75,10 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <div id="edit-message" class="alert mb-3" style="display:none;"></div>
 
             <!-- View mode -->
-            <dl class="row mb-0" id="view-mode">
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Code</dt>
-              <dd class="col-sm-9 mb-2" id="v-register_code">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Name</dt>
-              <dd class="col-sm-9 mb-2" id="v-register_name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Department</dt>
-              <dd class="col-sm-9 mb-2" id="v-department_name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Sub-Treasury</dt>
-              <dd class="col-sm-9 mb-2" id="v-sub_treasury_name">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Description</dt>
-              <dd class="col-sm-9 mb-2" id="v-description">—</dd>
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Status</dt>
-              <dd class="col-sm-9 mb-0" id="v-is_active">—</dd>
-            </dl>
+            <div id="view-mode">
+              <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.6rem;letter-spacing:.07em;">Description</div>
+              <div id="v-description" class="text-muted" style="font-size:.875rem;">—</div>
+            </div>
 
             <!-- Edit mode -->
             <div id="edit-mode" style="display:none;">
@@ -176,15 +196,19 @@ async function loadRecord() {
     var res = await apiGet(SHOW_URL + '?id=' + RECORD_ID);
     var r = res.data;
     recordData = r;
-    document.getElementById('record-heading').textContent      = r.register_name || 'Register';
-    document.getElementById('page-subtitle').textContent       = r.register_code ? r.register_code + ' — ' + r.register_name : (r.register_name || 'Register Details');
-    document.getElementById('v-register_code').textContent     = r.register_code || '—';
-    document.getElementById('v-register_name').textContent     = r.register_name || '—';
-    document.getElementById('v-department_name').textContent   = r.department_name || '—';
-    document.getElementById('v-sub_treasury_name').textContent = r.sub_treasury_name || '—';
-    document.getElementById('v-description').textContent       = r.description || '—';
-    document.getElementById('v-is_active').innerHTML           = isActiveBadge(r.is_active);
-    renderAssignedUsers(r.users || []);
+    var users = r.users || [];
+    // Header card
+    document.getElementById('h-register_code').textContent     = r.register_code || '—';
+    document.getElementById('h-register_name').textContent     = r.register_name || 'Register';
+    document.getElementById('h-department_name').textContent   = r.department_name || '—';
+    document.getElementById('h-sub_treasury_name').textContent = r.sub_treasury_name || '—';
+    document.getElementById('h-is_active').innerHTML           = isActiveBadge(r.is_active);
+    document.getElementById('h-user_count').textContent        = users.length > 0
+      ? users.length + ' user' + (users.length !== 1 ? 's' : '')
+      : '—';
+    // Body
+    document.getElementById('v-description').textContent = r.description || '—';
+    renderAssignedUsers(users);
   } catch (e) {
     showMsg('page-message', e.message);
   }

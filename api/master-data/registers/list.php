@@ -12,15 +12,21 @@ try {
     $departmentId  = (int)($_GET['department_id']       ?? 0);
     $subTreasuryId = (int)($_GET['sub_treasury_id']     ?? 0);
     $isActive      = trim((string)($_GET['is_active']   ?? ''));
-    $sql = "SELECT r.id, r.uuid, r.department_id, r.sub_treasury_id, r.assigned_user_id,
-                   r.register_code, r.register_name, r.description, r.is_active, r.created_at,
-                   d.name AS department_name, st.sub_treasury_name,
-                   CONCAT(u.first_name, ' ', u.last_name) AS assigned_user_name
-            FROM registers r
-            INNER JOIN departments d    ON d.id  = r.department_id
-            LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id
-            LEFT  JOIN users u          ON u.id  = r.assigned_user_id
-            WHERE 1=1";
+
+    $sql = "
+        SELECT r.id, r.uuid, r.department_id, r.sub_treasury_id,
+               r.register_code, r.register_name, r.description, r.is_active, r.created_at,
+               d.name AS department_name,
+               st.sub_treasury_name,
+               GROUP_CONCAT(CONCAT(u.first_name, ' ', u.last_name) ORDER BY u.first_name SEPARATOR ', ') AS assigned_users,
+               COUNT(ru.id) AS user_count
+        FROM registers r
+        INNER JOIN departments d     ON d.id  = r.department_id
+        LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id
+        LEFT  JOIN register_users ru ON ru.register_id = r.id
+        LEFT  JOIN users u           ON u.id = ru.user_id
+        WHERE 1=1";
+
     $params = [];
     if ($search !== '') {
         $sql .= " AND (r.register_code LIKE :s1 OR r.register_name LIKE :s2 OR d.name LIKE :s3 OR st.sub_treasury_name LIKE :s4)";
@@ -30,7 +36,12 @@ try {
     if ($departmentId  > 0) { $sql .= " AND r.department_id = :department_id";     $params['department_id']   = $departmentId; }
     if ($subTreasuryId > 0) { $sql .= " AND r.sub_treasury_id = :sub_treasury_id"; $params['sub_treasury_id'] = $subTreasuryId; }
     if ($isActive !== '')   { $sql .= " AND r.is_active = :is_active";             $params['is_active']       = (int)$isActive; }
-    $sql .= " ORDER BY r.register_name ASC";
+
+    $sql .= " GROUP BY r.id, r.uuid, r.department_id, r.sub_treasury_id,
+                       r.register_code, r.register_name, r.description, r.is_active, r.created_at,
+                       d.name, st.sub_treasury_name
+              ORDER BY r.register_name ASC";
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     ob_end_clean();

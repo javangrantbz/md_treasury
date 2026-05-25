@@ -11,27 +11,17 @@ Rbac::require($pdo, 'master_data.registers.manage');
 requirePost();
 
 $data = requestData();
-$userId = (int)($data['user_id'] ?? 0);
 
-if ($userId <= 0) {
-    apiResponse(['success' => false, 'message' => 'Invalid user id.'], 422);
-}
+$registerId = (int)($data['register_id'] ?? 0);
+$userId     = (int)($data['user_id']     ?? 0);
 
-$exists = $pdo->prepare("SELECT id FROM users WHERE id = :id LIMIT 1");
-$exists->execute(['id' => $userId]);
-
-if (!$exists->fetch()) {
-    apiResponse(['success' => false, 'message' => 'User not found.'], 404);
+if ($registerId <= 0 || $userId <= 0) {
+    apiResponse(['success' => false, 'message' => 'Register and user are required.'], 422);
 }
 
 $pdo->prepare("
-    UPDATE users
-    SET register_id = NULL
-    WHERE id = :id
-")->execute(['id' => $userId]);
+    DELETE FROM register_users WHERE register_id = :register_id AND user_id = :user_id
+")->execute(['register_id' => $registerId, 'user_id' => $userId]);
 
-AuditLog::log($pdo, 'remove', 'register', null, 'User #' . $userId . ' removed from register.');
-apiResponse([
-    'success' => true,
-    'message' => 'User removed from register successfully.'
-]);
+AuditLog::log($pdo, 'remove', 'register', $registerId, 'User #' . $userId . ' removed from register #' . $registerId . '.');
+apiResponse(['success' => true, 'message' => 'User removed successfully.']);

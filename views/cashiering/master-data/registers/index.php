@@ -44,7 +44,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
                 <th data-col="register_name">Name</th>
                 <th data-col="department_name">Department</th>
                 <th data-col="sub_treasury_name">Sub-Treasury</th>
-                <th data-col="assigned_user_name">Assigned User</th>
+                <th data-col="user_count">Users</th>
                 <th data-col="is_active">Status</th>
                 <th class="w-1"></th>
               </tr>
@@ -103,18 +103,6 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 
         <hr style="margin:.65rem 0;">
 
-        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Assignment</div>
-        <div class="row g-2">
-          <div class="col-12">
-            <label class="form-label">Assigned User</label>
-            <select class="form-select" id="add-assigned_user_id">
-              <option value="">— None —</option>
-            </select>
-          </div>
-        </div>
-
-        <hr style="margin:.65rem 0;">
-
         <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Notes</div>
         <textarea class="form-control" id="add-description" rows="2" placeholder="Optional description"></textarea>
       </div>
@@ -131,10 +119,9 @@ const LIST_URL     = "<?= url('api/master-data/registers/list.php') ?>";
 const CREATE_URL   = "<?= url('api/master-data/registers/create.php') ?>";
 const DEPT_URL     = "<?= url('api/master-data/departments/list.php') ?>";
 const ST_URL       = "<?= url('api/master-data/sub-treasuries/list.php') ?>";
-const USERS_URL    = "<?= url('api/master-data/users/list.php') ?>";
 const DETAILS_PAGE = "<?= url('views/cashiering/master-data/registers/details.php') ?>";
 
-let allRows = [], allDepartments = [], allSubTreasuries = [], allUsers = [];
+let allRows = [], allDepartments = [], allSubTreasuries = [];
 
 function showMsg(id, msg, type) {
   type = type || 'danger';
@@ -158,13 +145,10 @@ async function loadReferenceData() {
   var results = await Promise.all([
     apiGet(DEPT_URL + '?status=active'),
     apiGet(ST_URL),
-    apiGet(USERS_URL + '?status=active'),
   ]);
   allDepartments   = results[0].data || [];
   allSubTreasuries = results[1].data || [];
-  allUsers         = results[2].data || [];
   populateDeptSelects();
-  populateUserSelects();
 }
 
 function populateDeptSelects() {
@@ -188,13 +172,6 @@ function populateSubTreasurySelect(prefix, deptId, selectedId) {
     }).join('');
 }
 
-function populateUserSelects() {
-  var opts = '<option value="">— None —</option>' +
-    allUsers.map(function(u) {
-      return '<option value="' + u.id + '">' + u.first_name + ' ' + u.last_name + ' (' + u.username + ')</option>';
-    }).join('');
-  document.getElementById('add-assigned_user_id').innerHTML = opts;
-}
 
 document.getElementById('add-department_id').addEventListener('change', function() {
   populateSubTreasurySelect('add', this.value);
@@ -219,13 +196,16 @@ async function loadRows(search) {
 }
 
 function renderRow(r) {
-  var userName = r.assigned_user_name ? r.assigned_user_name.trim() : '<span class="text-muted">—</span>';
+  var count = parseInt(r.user_count, 10) || 0;
+  var userCell = count > 0
+    ? '<span class="badge bg-azure-lt text-azure">' + count + ' user' + (count !== 1 ? 's' : '') + '</span>'
+    : '<span class="text-muted">—</span>';
   return '<tr>' +
     '<td class="text-muted" style="font-size:.82rem;font-family:monospace;">' + (r.register_code || '') + '</td>' +
     '<td>' + (r.register_name || '') + '</td>' +
     '<td>' + (r.department_name || '') + '</td>' +
     '<td>' + (r.sub_treasury_name || '') + '</td>' +
-    '<td>' + userName + '</td>' +
+    '<td>' + userCell + '</td>' +
     '<td>' + isActiveBadge(r.is_active) + '</td>' +
     '<td><a href="' + DETAILS_PAGE + '?id=' + r.id + '" class="btn btn-sm btn-outline-secondary">Open &#8594;</a></td>' +
     '</tr>';
@@ -237,12 +217,11 @@ document.getElementById('add-save-btn').addEventListener('click', async function
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     await apiPost(CREATE_URL, {
-      register_name:    document.getElementById('add-register_name').value,
-      department_id:    document.getElementById('add-department_id').value,
-      sub_treasury_id:  document.getElementById('add-sub_treasury_id').value,
-      assigned_user_id: document.getElementById('add-assigned_user_id').value,
-      description:      document.getElementById('add-description').value,
-      is_active:        document.getElementById('add-active-check').checked ? 1 : 0,
+      register_name:   document.getElementById('add-register_name').value,
+      department_id:   document.getElementById('add-department_id').value,
+      sub_treasury_id: document.getElementById('add-sub_treasury_id').value,
+      description:     document.getElementById('add-description').value,
+      is_active:       document.getElementById('add-active-check').checked ? 1 : 0,
     });
     tabler.Modal.getInstance(document.getElementById('modal-add')).hide();
     loadRows();

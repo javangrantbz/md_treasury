@@ -14,10 +14,9 @@ requirePost();
 $data = requestData();
 $user = Auth::user();
 
-$departmentId   = (int)($data['department_id']    ?? 0);
-$subTreasuryId  = ($data['sub_treasury_id'] ?? '') !== '' ? (int)$data['sub_treasury_id'] : null;
-$assignedUserId = ($data['assigned_user_id'] ?? '') !== '' ? (int)$data['assigned_user_id'] : null;
-$registerName   = trim((string)($data['register_name'] ?? ''));
+$departmentId  = (int)($data['department_id']   ?? 0);
+$subTreasuryId = ($data['sub_treasury_id'] ?? '') !== '' ? (int)$data['sub_treasury_id'] : null;
+$registerName  = trim((string)($data['register_name'] ?? ''));
 $description    = trim((string)($data['description']   ?? ''));
 $isActive       = isset($data['is_active']) ? (int)$data['is_active'] : 1;
 
@@ -63,25 +62,24 @@ try {
 
     $stmt = $pdo->prepare("
         INSERT INTO registers (
-            uuid, department_id, sub_treasury_id, assigned_user_id, register_code, register_name,
+            uuid, department_id, sub_treasury_id, register_code, register_name,
             description, is_active, created_by, updated_by
         ) VALUES (
-            :uuid, :department_id, :sub_treasury_id, :assigned_user_id, :register_code, :register_name,
+            :uuid, :department_id, :sub_treasury_id, :register_code, :register_name,
             :description, :is_active, :created_by, :updated_by
         )
     ");
 
     $stmt->execute([
-        'uuid'             => $uuid,
-        'department_id'    => $departmentId,
-        'sub_treasury_id'  => $subTreasuryId,
-        'assigned_user_id' => $assignedUserId,
-        'register_code'    => 'TEMP-' . time(),
-        'register_name'    => $registerName,
-        'description'      => $description !== '' ? $description : null,
-        'is_active'        => $isActive === 1 ? 1 : 0,
-        'created_by'       => $user['id'] ?? null,
-        'updated_by'       => $user['id'] ?? null,
+        'uuid'            => $uuid,
+        'department_id'   => $departmentId,
+        'sub_treasury_id' => $subTreasuryId,
+        'register_code'   => 'TEMP-' . time(),
+        'register_name'   => $registerName,
+        'description'     => $description !== '' ? $description : null,
+        'is_active'       => $isActive === 1 ? 1 : 0,
+        'created_by'      => $user['id'] ?? null,
+        'updated_by'      => $user['id'] ?? null,
     ]);
 
     $newId        = (int)$pdo->lastInsertId();

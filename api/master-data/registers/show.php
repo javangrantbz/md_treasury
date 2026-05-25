@@ -18,27 +18,32 @@ if ($id <= 0) {
 
 try {
     $stmt = $pdo->prepare("
-        SELECT
-            r.*,
-            d.name  AS department_name,
-            st.sub_treasury_name,
-            CONCAT(u.first_name, ' ', u.last_name) AS assigned_user_name,
-            u.username AS assigned_username
+        SELECT r.*,
+               d.name AS department_name,
+               st.sub_treasury_name
         FROM registers r
-        INNER JOIN departments d   ON d.id  = r.department_id
+        INNER JOIN departments d     ON d.id  = r.department_id
         LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id
-        LEFT  JOIN users u         ON u.id  = r.assigned_user_id
         WHERE r.id = :id
         LIMIT 1
     ");
     $stmt->execute(['id' => $id]);
-
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$row) {
         ob_end_clean();
         apiResponse(['success' => false, 'message' => 'Register not found.'], 404);
     }
+
+    $uStmt = $pdo->prepare("
+        SELECT u.id, u.first_name, u.last_name, u.username
+        FROM register_users ru
+        JOIN users u ON u.id = ru.user_id
+        WHERE ru.register_id = :id
+        ORDER BY u.first_name, u.last_name
+    ");
+    $uStmt->execute(['id' => $id]);
+    $row['users'] = $uStmt->fetchAll(PDO::FETCH_ASSOC);
 
     ob_end_clean();
     apiResponse(['success' => true, 'data' => $row]);

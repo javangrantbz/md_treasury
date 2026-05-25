@@ -14,11 +14,10 @@ requirePost();
 $data = requestData();
 $user = Auth::user();
 
-$id             = (int)($data['id']             ?? 0);
-$departmentId   = (int)($data['department_id']   ?? 0);
-$subTreasuryId  = ($data['sub_treasury_id'] ?? '') !== '' ? (int)$data['sub_treasury_id'] : null;
-$assignedUserId = ($data['assigned_user_id'] ?? '') !== '' ? (int)$data['assigned_user_id'] : null;
-$registerName   = trim((string)($data['register_name'] ?? ''));
+$id            = (int)($data['id']             ?? 0);
+$departmentId  = (int)($data['department_id']   ?? 0);
+$subTreasuryId = ($data['sub_treasury_id'] ?? '') !== '' ? (int)$data['sub_treasury_id'] : null;
+$registerName  = trim((string)($data['register_name'] ?? ''));
 $description    = trim((string)($data['description']   ?? ''));
 $isActive       = isset($data['is_active']) ? (int)$data['is_active'] : 1;
 
@@ -61,13 +60,12 @@ try {
     $stmt = $pdo->prepare("
         UPDATE registers
         SET
-            department_id    = :department_id,
-            sub_treasury_id  = :sub_treasury_id,
-            assigned_user_id = :assigned_user_id,
-            register_name    = :register_name,
-            description      = :description,
-            is_active        = :is_active,
-            updated_by       = :updated_by
+            department_id   = :department_id,
+            sub_treasury_id = :sub_treasury_id,
+            register_name   = :register_name,
+            description     = :description,
+            is_active       = :is_active,
+            updated_by      = :updated_by
         WHERE id = :id
     ");
 
@@ -75,7 +73,6 @@ try {
         'id'              => $id,
         'department_id'   => $departmentId,
         'sub_treasury_id' => $subTreasuryId,
-        'assigned_user_id'=> $assignedUserId,
         'register_name'   => $registerName,
         'description'     => $description !== '' ? $description : null,
         'is_active'       => $isActive === 1 ? 1 : 0,

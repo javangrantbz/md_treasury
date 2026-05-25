@@ -24,10 +24,11 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.1em;">Cashiering &middot; Master Data &middot; Registers</div>
             <div class="d-flex align-items-center gap-3 flex-wrap">
 
-              <!-- Code + Name -->
+              <!-- Code + Name + Description -->
               <div style="min-width:140px;">
                 <div class="text-muted" style="font-size:.72rem;font-family:monospace;" id="h-register_code">—</div>
                 <div class="fw-bold" style="font-size:1rem;line-height:1.25;" id="h-register_name">Loading...</div>
+                <div class="text-muted" style="font-size:.78rem;margin-top:.15rem;" id="h-description"></div>
               </div>
 
               <div style="width:1px;align-self:stretch;background:var(--tblr-border-color);"></div>
@@ -196,8 +197,7 @@ async function loadRecord() {
     document.getElementById('h-user_count').textContent        = users.length > 0
       ? users.length + ' user' + (users.length !== 1 ? 's' : '')
       : '—';
-    // Body
-    document.getElementById('v-description').textContent = r.description || '—';
+    document.getElementById('h-description').textContent       = r.description || '';
     renderAssignedUsers(users);
   } catch (e) {
     showMsg('page-message', e.message);
@@ -279,14 +279,15 @@ function enterEditMode() {
     });
   }
   editCard.style.display = '';
+  editCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   editToggleBtn.textContent = 'Cancel';
-  editToggleBtn.className = 'btn btn-sm btn-outline-secondary';
+  editToggleBtn.className = 'btn btn-secondary btn-sm';
 }
 
 function exitEditMode() {
   editCard.style.display = 'none';
   editToggleBtn.textContent = 'Edit';
-  editToggleBtn.className = 'btn btn-sm btn-primary';
+  editToggleBtn.className = 'btn btn-primary btn-sm';
   clearMsg('edit-message');
 }
 

@@ -30,12 +30,26 @@ $branchId        = ($data['branch_id']        ?? '') !== '' ? (int)$data['branch
 $subTreasuryId   = ($data['sub_treasury_id']  ?? '') !== '' ? (int)$data['sub_treasury_id']  : null;
 $registerId      = ($data['register_id']      ?? '') !== '' ? (int)$data['register_id']      : null;
 
-if ($firstName === '' || $lastName === '' || $username === '' || $email === '' || $password === '') {
-    apiResponse(['success' => false, 'message' => 'Required fields missing.'], 422);
+$isMicrosoft = $authSource === 'microsoft';
+
+if ($email === '') {
+    apiResponse(['success' => false, 'message' => 'Email is required.'], 422);
 }
 
-if ($password !== $confirmPassword) {
-    apiResponse(['success' => false, 'message' => 'Passwords do not match.'], 422);
+if ($isMicrosoft) {
+    // Name and username will be populated on first login via Entra sync
+    if ($username === '') {
+        $username = strstr($email, '@', true) ?: $email;
+    }
+    // Generate a random unusable password — Microsoft users never use it
+    $password = bin2hex(random_bytes(32));
+} else {
+    if ($firstName === '' || $lastName === '' || $username === '' || $password === '') {
+        apiResponse(['success' => false, 'message' => 'Required fields missing.'], 422);
+    }
+    if ($password !== $confirmPassword) {
+        apiResponse(['success' => false, 'message' => 'Passwords do not match.'], 422);
+    }
 }
 
 $allowedAuthSources = ['local', 'sso', 'microsoft'];
@@ -56,7 +70,7 @@ if ($roleId > 0) {
     }
 }
 
-$passwordHash = password_hash($password, PASSWORD_DEFAULT);
+$passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
 // Generate UUID v4
 $uuidBytes = random_bytes(16);

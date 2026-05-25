@@ -74,36 +74,61 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
       </div>
       <div class="modal-body">
         <div id="add-message" class="alert" style="display:none"></div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">First Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="add-first_name" placeholder="First name">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Last Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="add-last_name" placeholder="Last name">
-          </div>
+
+        <!-- Auth Type first so it controls what follows -->
+        <div class="mb-3">
+          <label class="form-label">Auth Type</label>
+          <select class="form-select" id="add-auth_source">
+            <option value="local">Local</option>
+            <option value="sso">SSO</option>
+            <option value="microsoft">Microsoft SSO</option>
+          </select>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
+
+        <!-- Microsoft notice -->
+        <div id="add-ms-notice" class="alert alert-info py-2 mb-3" style="display:none;font-size:.82rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="14" height="14" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+          Name and username will be populated automatically on the user's first Microsoft login.
+        </div>
+
+        <!-- Local/SSO only fields -->
+        <div id="add-local-fields">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">First Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="add-first_name" placeholder="First name">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Last Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="add-last_name" placeholder="Last name">
+            </div>
+          </div>
+          <div class="mb-3">
             <label class="form-label">Username <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="add-username" placeholder="Username">
           </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Email <span class="text-danger">*</span></label>
-            <input type="email" class="form-control" id="add-email" placeholder="Email address">
+        </div>
+
+        <!-- Email (always shown) -->
+        <div class="mb-3">
+          <label class="form-label">Email <span class="text-danger">*</span></label>
+          <input type="email" class="form-control" id="add-email" placeholder="Email address">
+        </div>
+
+        <!-- Password (local/SSO only) -->
+        <div id="add-password-fields">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Password <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" id="add-password" placeholder="Password">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" id="add-confirm_password" placeholder="Confirm password">
+            </div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Password <span class="text-danger">*</span></label>
-            <input type="password" class="form-control" id="add-password" placeholder="Password">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-            <input type="password" class="form-control" id="add-confirm_password" placeholder="Confirm password">
-          </div>
-        </div>
+
         <div class="row">
           <div class="col-md-6 mb-3">
             <label class="form-label">Role</label>
@@ -111,19 +136,11 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
               <option value="">— No Role —</option>
             </select>
           </div>
-          <div class="col-md-3 mb-3">
+          <div class="col-md-6 mb-3">
             <label class="form-label">User Type</label>
             <select class="form-select" id="add-user_type">
               <option value="internal">Internal</option>
               <option value="external">External</option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Auth Type</label>
-            <select class="form-select" id="add-auth_source">
-              <option value="local">Local</option>
-              <option value="sso">SSO</option>
-              <option value="microsoft">Microsoft SSO</option>
             </select>
           </div>
         </div>
@@ -162,6 +179,17 @@ function statusBadge(val) {
     ? '<span class="badge bg-success-lt text-success">Active</span>'
     : '<span class="badge bg-secondary-lt text-secondary">Inactive</span>';
 }
+
+function applyAuthToggle(authSource) {
+  var isMs = authSource === 'microsoft';
+  document.getElementById('add-local-fields').style.display    = isMs ? 'none' : '';
+  document.getElementById('add-password-fields').style.display = isMs ? 'none' : '';
+  document.getElementById('add-ms-notice').style.display       = isMs ? '' : 'none';
+}
+
+document.getElementById('add-auth_source').addEventListener('change', function() {
+  applyAuthToggle(this.value);
+});
 
 async function loadRoleOptions() {
   try {
@@ -239,6 +267,7 @@ document.getElementById('modal-add').addEventListener('hidden.bs.modal', functio
     if (el.type === 'checkbox') return;
     el.value = el.tagName === 'SELECT' ? (el.options[0] ? el.options[0].value : '') : '';
   });
+  applyAuthToggle('local');
 });
 
 document.addEventListener('DOMContentLoaded', function() {

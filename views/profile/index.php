@@ -17,14 +17,6 @@ require_once __DIR__ . '/../../includes/layout-tabler-header.php';
 require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 ?>
 
-  <?php if (!empty($_SESSION['_debug_ms_claims'])): ?>
-  <div class="container-xl mt-3">
-    <div class="alert alert-warning py-2" style="font-size:.8rem;">
-      <strong>DEBUG — Microsoft token claims:</strong> <?= h(implode(', ', $_SESSION['_debug_ms_claims'])) ?>
-    </div>
-  </div>
-  <?php endif; ?>
-
   <div class="page-header d-print-none">
     <div class="container-xl">
       <div class="row align-items-center">

@@ -82,7 +82,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <option value="local">Local</option>
             <option value="microsoft">Microsoft SSO</option>
           </select>
-          <div id="add-ms-notice" style="display:none;font-size:.78rem;" class="text-info d-flex align-items-center gap-1">
+          <div id="add-ms-notice" style="display:none;font-size:.78rem;" class="text-info align-items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 21 21" style="flex-shrink:0"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
             Name &amp; username sync on first login
           </div>
@@ -199,7 +199,7 @@ function applyAuthToggle(authSource) {
   var isMs = authSource === 'microsoft';
   document.getElementById('add-local-fields').style.display    = isMs ? 'none' : '';
   document.getElementById('add-password-fields').style.display = isMs ? 'none' : '';
-  document.getElementById('add-ms-notice').style.display       = isMs ? '' : 'none';
+  document.getElementById('add-ms-notice').style.display       = isMs ? 'flex' : 'none';
   document.getElementById('add-ms-email-field').style.display  = isMs ? '' : 'none';
 }
 

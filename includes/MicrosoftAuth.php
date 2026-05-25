@@ -89,7 +89,25 @@ final class MicrosoftAuth
             return ['success' => false, 'message' => 'This account is not configured to use Microsoft login.'];
         }
 
-        // 5. Complete Login
+        // 5. Sync profile fields from Microsoft token into DB
+        $givenName  = trim($payload['given_name']  ?? '');
+        $familyName = trim($payload['family_name'] ?? '');
+        if ($givenName !== '' || $familyName !== '') {
+            $syncFields = [];
+            $syncParams = ['id' => (int)$user['id']];
+            if ($givenName !== '') {
+                $syncFields[] = 'first_name = :first_name';
+                $syncParams['first_name'] = $givenName;
+            }
+            if ($familyName !== '') {
+                $syncFields[] = 'last_name = :last_name';
+                $syncParams['last_name'] = $familyName;
+            }
+            $pdo->prepare("UPDATE users SET " . implode(', ', $syncFields) . " WHERE id = :id")
+                ->execute($syncParams);
+        }
+
+        // 6. Complete Login
         require_once __DIR__ . '/Auth.php';
         Auth::completeLogin($pdo, (int)$user['id']);
 

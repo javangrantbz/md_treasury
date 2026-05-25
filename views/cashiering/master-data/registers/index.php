@@ -74,34 +74,49 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
       </div>
       <div class="modal-body">
         <div id="add-message" class="alert" style="display:none"></div>
-        <div class="mb-3">
-          <label class="form-label">Register Name <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="add-register_name" placeholder="Register name">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Register</div>
+        <div class="row g-2">
+          <div class="col-12">
+            <label class="form-label">Register Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="add-register_name" placeholder="Register name">
+          </div>
         </div>
-        <div class="row mb-3">
-          <div class="col-md-6">
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Location</div>
+        <div class="row g-2">
+          <div class="col-6">
             <label class="form-label">Department <span class="text-danger">*</span></label>
             <select class="form-select" id="add-department_id">
               <option value="">— Select Department —</option>
             </select>
           </div>
-          <div class="col-md-6">
+          <div class="col-6">
             <label class="form-label">Sub-Treasury</label>
             <select class="form-select" id="add-sub_treasury_id" disabled>
               <option value="">— Select Department first —</option>
             </select>
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Assigned User</label>
-          <select class="form-select" id="add-assigned_user_id">
-            <option value="">— None —</option>
-          </select>
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Assignment</div>
+        <div class="row g-2">
+          <div class="col-12">
+            <label class="form-label">Assigned User</label>
+            <select class="form-select" id="add-assigned_user_id">
+              <option value="">— None —</option>
+            </select>
+          </div>
         </div>
-        <div class="mb-2">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" id="add-description" rows="2" placeholder="Optional description"></textarea>
-        </div>
+
+        <hr style="margin:.65rem 0;">
+
+        <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.63rem;letter-spacing:.08em;">Notes</div>
+        <textarea class="form-control" id="add-description" rows="2" placeholder="Optional description"></textarea>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>

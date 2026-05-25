@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../config/database.php';
 
 $authUser = Auth::user();
 $fullName = Auth::fullName();
-$today    = date('l, F j, Y');
 
 require_once __DIR__ . '/../../includes/layout-tabler-header.php';
 require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
@@ -25,9 +24,6 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
             Treasury POS
           </a>
-        </div>
-        <div class="col-auto d-none d-md-block">
-          <span class="text-muted"><?php echo $today; ?></span>
         </div>
       </div>
     </div>

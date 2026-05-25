@@ -90,8 +90,19 @@ final class MicrosoftAuth
         }
 
         // 5. Sync profile fields from Microsoft token into DB
+        // Store claim keys in session temporarily for debugging
+        $_SESSION['_debug_ms_claims'] = array_keys($payload);
+
         $givenName  = trim($payload['given_name']  ?? '');
         $familyName = trim($payload['family_name'] ?? '');
+
+        // Fallback: split the always-present 'name' claim on last space
+        if ($givenName === '' && $familyName === '' && !empty($payload['name'])) {
+            $nameParts  = explode(' ', trim($payload['name']), 2);
+            $givenName  = $nameParts[0];
+            $familyName = isset($nameParts[1]) ? $nameParts[1] : '';
+        }
+
         if ($givenName !== '' || $familyName !== '') {
             $syncFields = [];
             $syncParams = ['id' => (int)$user['id']];

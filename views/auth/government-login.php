@@ -205,8 +205,8 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
     </div>
 
     <!-- RIGHT: Form panel -->
-    <div class="flex-1 mesh-right flex flex-col items-center justify-center p-6 overflow-y-auto">
-      <div class="w-full max-w-sm my-10">
+    <div class="flex-1 mesh-right flex flex-col items-center overflow-y-auto">
+      <div class="w-full max-w-sm my-auto py-6 px-6">
 
         <!-- Mobile: compact brand header -->
         <div class="flex md:hidden items-center gap-3 mb-6 fade-up">
@@ -223,13 +223,13 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
           <!-- Accent bar -->
           <div class="h-[4px] bg-gradient-to-r from-navy-800 via-gold-400 to-navy-800"></div>
 
-          <div class="p-7 sm:p-8">
+          <div class="p-5 sm:p-6">
 
             <h2 class="text-lg font-bold text-gray-900 mb-0.5">Sign In</h2>
-            <p class="text-xs text-gray-500 mb-5">Enter your credentials to access Treasury Revenue System.</p>
+            <p class="text-xs text-gray-500 mb-4">Enter your credentials to access Treasury Revenue System.</p>
 
             <!-- Security notice -->
-            <div class="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-3 mb-5 fade-up delay-2">
+            <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-4 fade-up delay-2">
               <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -242,7 +242,7 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
 
             <!-- Error alert -->
             <?php if ($error): ?>
-            <div class="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-xl px-3.5 py-3 mb-5 fade-up" role="alert">
+            <div class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 mb-4 fade-up" role="alert">
               <svg class="w-4 h-4 flex-shrink-0 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
@@ -250,7 +250,7 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
             </div>
             <?php endif; ?>
 
-            <form method="post" action="<?= url('api/auth/login.php') ?>" autocomplete="on" id="login-form" class="space-y-4">
+            <form method="post" action="<?= url('api/auth/login.php') ?>" autocomplete="on" id="login-form" class="space-y-3">
 
               <!-- Email -->
               <div class="fade-up delay-2">
@@ -265,7 +265,7 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
                   </div>
                   <input type="email" id="login" name="login" required autocomplete="email" autofocus
                     placeholder="you@gobmail.gov.bz" aria-required="true"
-                    class="glass-input <?= $error ? 'is-invalid' : '' ?> w-full pl-10 pr-4 py-3 rounded-xl text-sm text-gray-900 placeholder-gray-400">
+                    class="glass-input <?= $error ? 'is-invalid' : '' ?> w-full pl-10 pr-4 py-2.5 rounded-xl text-sm text-gray-900 placeholder-gray-400">
                 </div>
               </div>
 
@@ -282,7 +282,7 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
                   </div>
                   <input type="password" id="password" name="password" required autocomplete="current-password"
                     placeholder="••••••••" aria-required="true"
-                    class="glass-input <?= $error ? 'is-invalid' : '' ?> w-full pl-10 pr-10 py-3 rounded-xl text-sm text-gray-900 placeholder-gray-400">
+                    class="glass-input <?= $error ? 'is-invalid' : '' ?> w-full pl-10 pr-10 py-2.5 rounded-xl text-sm text-gray-900 placeholder-gray-400">
                   <button type="button" id="pw-toggle" tabindex="-1" aria-label="Show password"
                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
                     <svg id="icon-eye" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
@@ -305,9 +305,9 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
               </div>
 
               <!-- Submit -->
-              <div class="pt-1 fade-up delay-4">
+              <div class="pt-0 fade-up delay-4">
                 <button type="submit"
-                  class="btn-signin w-full py-3 rounded-xl text-white text-sm font-bold tracking-wide flex items-center justify-center gap-2.5">
+                  class="btn-signin w-full py-2.5 rounded-xl text-white text-sm font-bold tracking-wide flex items-center justify-center gap-2.5">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
                     <rect x="3" y="11" width="18" height="11" rx="2"/>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -319,16 +319,16 @@ $microsoftLoginUrl = MicrosoftAuth::getLoginUrl(abs_url('views/auth/microsoft-ca
             </form>
 
             <!-- Divider -->
-            <div class="flex items-center gap-3 mt-5 fade-up delay-4">
+            <div class="flex items-center gap-3 mt-4 fade-up delay-4">
               <div class="flex-1 h-px bg-gray-200/80"></div>
               <span class="text-[.68rem] text-gray-400 font-medium tracking-wide">or continue with</span>
               <div class="flex-1 h-px bg-gray-200/80"></div>
             </div>
 
             <!-- Microsoft SSO -->
-            <div class="mt-4 fade-up delay-4">
+            <div class="mt-3 fade-up delay-4">
               <a href="<?= h($microsoftLoginUrl) ?>"
-                 class="flex items-center justify-center gap-2.5 w-full py-3 px-4 rounded-xl border border-gray-300/80 bg-white/70 hover:bg-white hover:border-gray-400 text-sm font-semibold text-gray-700 tracking-wide transition-all duration-200 shadow-sm hover:shadow-md group">
+                 class="flex items-center justify-center gap-2.5 w-full py-2.5 px-4 rounded-xl border border-gray-300/80 bg-white/70 hover:bg-white hover:border-gray-400 text-sm font-semibold text-gray-700 tracking-wide transition-all duration-200 shadow-sm hover:shadow-md group">
                 <svg class="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
                   <rect x="1"  y="1"  width="9" height="9" fill="#F25022"/>
                   <rect x="11" y="1"  width="9" height="9" fill="#7FBA00"/>

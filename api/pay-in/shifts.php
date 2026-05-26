@@ -14,30 +14,31 @@ $dateTo   = trim((string)($_GET['date_to']   ?? ''));
 try {
     $sql = "
         SELECT
-            t.shift_id,
-            MIN(t.completed_at) as shift_start,
-            MAX(t.completed_at) as shift_end,
-            COUNT(t.id) as transaction_count,
-            SUM(t.total_amount) as total_amount,
+            s.shift_id,
+            s.started_at AS shift_start,
+            s.ended_at   AS shift_end,
+            COUNT(t.id)  AS transaction_count,
+            COALESCE(SUM(t.total_amount), 0) AS total_amount,
             CONCAT(u.first_name, ' ', u.last_name) AS cashier_name
-        FROM transactions t
-        LEFT JOIN users u ON u.id = t.uid
-        WHERE t.status = 'completed'
+        FROM pos_shifts s
+        LEFT JOIN pos_transactions t ON t.shift_id = s.shift_id AND t.status = 'completed'
+        LEFT JOIN users u ON u.id = s.uid
+        WHERE 1=1
     ";
 
     $params = [];
 
     if ($dateFrom !== '') {
-        $sql .= " AND DATE(t.completed_at) >= :date_from";
+        $sql .= " AND DATE(s.started_at) >= :date_from";
         $params['date_from'] = $dateFrom;
     }
 
     if ($dateTo !== '') {
-        $sql .= " AND DATE(t.completed_at) <= :date_to";
+        $sql .= " AND DATE(s.started_at) <= :date_to";
         $params['date_to'] = $dateTo;
     }
 
-    $sql .= " GROUP BY t.shift_id, u.first_name, u.last_name ORDER BY shift_end DESC";
+    $sql .= " GROUP BY s.shift_id, s.started_at, s.ended_at, u.first_name, u.last_name ORDER BY s.started_at DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

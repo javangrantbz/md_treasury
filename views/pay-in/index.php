@@ -13,12 +13,18 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
       <!-- Page identity card -->
       <div class="card mb-4" style="border-left: 4px solid var(--tblr-primary);">
         <div class="card-body py-3">
-          <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
               <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Government of Belize &middot; Treasury Department</div>
               <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Pay-In Shift Summary</div>
             </div>
-            <button class="btn btn-outline-secondary btn-sm d-print-none" onclick="window.print()">Print / Export</button>
+            <div class="d-flex gap-2">
+              <a href="<?= url('views/pay-in/pos-terminal.php') ?>" class="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Open POS Terminal
+              </a>
+              <button class="btn btn-outline-secondary btn-sm d-print-none" onclick="window.print()">Print / Export</button>
+            </div>
           </div>
         </div>
       </div>

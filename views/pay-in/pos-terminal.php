@@ -1983,7 +1983,7 @@ function populateBankSelect(selId, accounts) {
 }
 
 function validateCheckout() {
-  var ok = !!selectedPayMethod;
+  var ok = !!selectedPayMethod && !!selectedPayer;
   if (ok && selectedPayMethod === 'check') {
     ok = !!(document.getElementById('pd-check-number').value.trim() && document.getElementById('pd-check-bank').value.trim());
   } else if (ok && selectedPayMethod === 'bank_deposit') {
@@ -2003,6 +2003,7 @@ document.getElementById('btn-confirm-checkout').addEventListener('click', functi
   var btn   = this;
   var errEl = document.getElementById('co-error');
   errEl.classList.add('hidden');
+  if (!selectedPayer)     { errEl.textContent = 'Please select a payer before confirming.'; errEl.classList.remove('hidden'); return; }
   if (!selectedPayMethod) { errEl.textContent = 'Please select a payment method.'; errEl.classList.remove('hidden'); return; }
   if (!cartItems.length)  { errEl.textContent = 'Cart is empty.'; errEl.classList.remove('hidden'); return; }
 

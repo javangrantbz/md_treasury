@@ -64,16 +64,16 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
   <div class="container-xl">
 
     <!-- Page header -->
-    <div class="card mb-4" style="border-left:4px solid var(--tblr-success);">
+    <div class="card mb-4" style="border-left:4px solid #b45309;background:linear-gradient(135deg,#fffbeb 0%,#fff 60%);">
       <div class="card-body py-3">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
-            <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.63rem;letter-spacing:.1em;">Pay-In &middot; Revenue Collection</div>
-            <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Pay-In History</div>
+            <div class="text-uppercase fw-semibold mb-1" style="font-size:.63rem;letter-spacing:.1em;color:#b45309;">Pay-In &middot; Revenue Collection &middot; Belize Dollar (BZD)</div>
+            <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;color:#78350f;">Pay-In History</div>
           </div>
           <div class="d-flex gap-2">
             <a href="<?= url('views/pay-in/index.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Portal</a>
-            <a href="<?= url('views/pay-in/pay-in-new.php') ?>" class="btn btn-success btn-sm">+ New Pay-In</a>
+            <a href="<?= url('views/pay-in/pay-in-new.php') ?>" class="btn btn-sm" style="background:#b45309;color:#fff;border-color:#b45309;">+ New Pay-In</a>
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
             </select>
           </div>
           <div class="col-auto">
-            <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            <button type="submit" class="btn btn-sm" style="background:#b45309;color:#fff;border-color:#b45309;">Filter</button>
           </div>
           <div class="col-auto">
             <a href="<?= url('views/pay-in/pay-in-list.php') ?>" class="btn btn-sm btn-outline-secondary">Reset</a>
@@ -197,7 +197,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               <td colspan="4" class="text-end">Totals</td>
               <td class="text-end">BZD $<?= number_format($grandCash, 2) ?></td>
               <td class="text-end">BZD $<?= number_format($grandCheques, 2) ?></td>
-              <td class="text-end" style="color:#1e4620;">BZD $<?= number_format($grandTotal, 2) ?></td>
+              <td class="text-end" style="color:#92400e;">BZD $<?= number_format($grandTotal, 2) ?></td>
               <td colspan="3"></td>
             </tr>
           </tfoot>

@@ -112,18 +112,18 @@ function piFmtDate($d) {
 
 // Denomination display rows (only non-zero)
 $denomDefs = [
-    ['d_100', 100.00, '$100.00'],
-    ['d_50',   50.00,  '$50.00'],
-    ['d_20',   20.00,  '$20.00'],
-    ['d_10',   10.00,  '$10.00'],
-    ['d_5',     5.00,   '$5.00'],
-    ['d_2',     2.00,   '$2.00'],
-    ['d_1',     1.00,   '$1.00'],
-    ['c_50',    0.50,  '¢0.50'],
-    ['c_25',    0.25,  '¢0.25'],
-    ['c_10',    0.10,  '¢0.10'],
-    ['c_5',     0.05,  '¢0.05'],
-    ['c_1',     0.01,  '¢0.01'],
+    ['d_100', 100.00, 'BZD $100'],
+    ['d_50',   50.00, 'BZD $50'],
+    ['d_20',   20.00, 'BZD $20'],
+    ['d_10',   10.00, 'BZD $10'],
+    ['d_5',     5.00, 'BZD $5'],
+    ['d_2',     2.00, 'BZD $2'],
+    ['d_1',     1.00, '$1.00'],
+    ['c_50',    0.50, '$0.50'],
+    ['c_25',    0.25, '$0.25'],
+    ['c_10',    0.10, '$0.10'],
+    ['c_5',     0.05, '$0.05'],
+    ['c_1',     0.01, '$0.01'],
 ];
 $nonZeroDenoms = [];
 if ($cash) {
@@ -153,46 +153,46 @@ ob_end_clean();
 <style>
 *, *::before, *::after { box-sizing: border-box; }
 body { font-family: 'Inter', sans-serif; margin: 0; background: #f1f5f9; color: #111; }
-.toolbar { background: #1e4620; color: #fff; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.toolbar { background: linear-gradient(135deg,#92400e 0%,#b45309 100%); color: #fff; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .toolbar a, .toolbar button { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: 5px 14px; border-radius: 5px; cursor: pointer; text-decoration: none; }
 .tb-back   { color: rgba(255,255,255,.65); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); }
 .tb-back:hover { background: rgba(255,255,255,.18); color: #fff; }
 .tb-new    { color: rgba(255,255,255,.65); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); }
 .tb-new:hover { background: rgba(255,255,255,.18); color: #fff; }
-.tb-print  { background: #fff; color: #1e4620; border: none; }
-.tb-print:hover { background: #e8f3e8; }
+.tb-print  { background: #fff; color: #92400e; border: none; }
+.tb-print:hover { background: #fef3c7; }
 .wrapper   { max-width: 820px; margin: 24px auto; padding: 0 16px 40px; }
 .paper     { background: #fff; border-radius: 12px; box-shadow: 0 2px 20px rgba(0,0,0,.08); overflow: hidden; }
 .rpad      { padding: 32px 40px 36px; }
-.off-hdr   { text-align: center; padding-bottom: 18px; margin-bottom: 20px; border-bottom: 2px solid #1e4620; }
+.off-hdr   { text-align: center; padding-bottom: 18px; margin-bottom: 20px; border-bottom: 2px solid #b45309; }
 .off-inner { display: inline-flex; align-items: center; gap: 14px; margin-bottom: 10px; }
 .off-title { text-align: left; }
-.gov-lbl   { font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #4a6e4b; margin-bottom: 2px; }
-.sys-nm    { font-size: 17px; font-weight: 900; color: #1e4620; line-height: 1.15; }
-.min-lbl   { font-size: 8px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #6b8f6c; margin-top: 2px; }
-.doc-badge { display: inline-block; background: #1e4620; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; padding: 4px 20px; border-radius: 4px; }
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 24px; background: #f8fdf5; border: 1px solid #d1e8d2; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; font-size: 11px; }
-.info-lbl  { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b8f6c; display: block; margin-bottom: 2px; }
+.gov-lbl   { font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #92400e; margin-bottom: 2px; }
+.sys-nm    { font-size: 17px; font-weight: 900; color: #78350f; line-height: 1.15; }
+.min-lbl   { font-size: 8px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #b45309; margin-top: 2px; }
+.doc-badge { display: inline-block; background: linear-gradient(135deg,#92400e 0%,#b45309 100%); color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; padding: 4px 20px; border-radius: 4px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 24px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; font-size: 11px; }
+.info-lbl  { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #b45309; display: block; margin-bottom: 2px; }
 .info-val  { font-weight: 600; color: #111; }
-.words-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; font-size: 12px; color: #14532d; }
-.words-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #16a34a; margin-bottom: 3px; }
-.sec-lbl   { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #1e4620; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
+.words-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; font-size: 12px; color: #78350f; }
+.words-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #b45309; margin-bottom: 3px; }
+.sec-lbl   { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #92400e; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
 .dtable    { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 18px; }
-.dtable thead tr { background: #1e4620; color: #fff; }
+.dtable thead tr { background: linear-gradient(135deg,#92400e 0%,#b45309 100%); color: #fff; }
 .dtable thead th { padding: 7px 10px; font-size: 8.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .dtable thead th:first-child { text-align: left; }
 .dtable thead th.tc { text-align: center; }
 .dtable thead th.tr { text-align: right; }
-.dtable tbody td { padding: 7px 10px; border-bottom: 1px solid #e8f3e8; font-size: 11px; }
+.dtable tbody td { padding: 7px 10px; border-bottom: 1px solid #fde68a; font-size: 11px; }
 .dtable tbody td.tc { text-align: center; }
 .dtable tbody td.tr { text-align: right; font-weight: 600; }
-.dtable tfoot td { padding: 9px 10px; font-weight: 900; background: #f0f7eb; border-top: 2px solid #1e4620; }
-.dtable tfoot td.tr { text-align: right; font-size: 13px; color: #1e4620; }
+.dtable tfoot td { padding: 9px 10px; font-weight: 900; background: #fef3c7; border-top: 2px solid #b45309; }
+.dtable tfoot td.tr { text-align: right; font-size: 13px; color: #92400e; }
 .dtable tfoot td.tc { text-align: center; }
-.grand-box { display: flex; justify-content: space-between; align-items: center; background: #1e4620; color: #fff; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; }
-.grand-lbl { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #a7d9a8; }
+.grand-box { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg,#92400e 0%,#b45309 100%); color: #fff; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; }
+.grand-lbl { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #fde68a; }
 .grand-val { font-size: 26px; font-weight: 900; color: #fff; }
-.slip-box  { background: #f8fdf5; border: 1px solid #d1e8d2; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; font-size: 11px; }
+.slip-box  { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; font-size: 11px; }
 .notes-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 22px; font-size: 11px; color: #374151; }
 .sig-grid  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; font-size: 10.5px; }
 .sig-block .sig-line { border-top: 1px solid #374151; padding-top: 6px; font-weight: 700; color: #111; margin-bottom: 10px; }
@@ -243,7 +243,7 @@ body { font-family: 'Inter', sans-serif; margin: 0; background: #f1f5f9; color: 
       <div class="info-grid">
         <div>
           <span class="info-lbl">Pay-In ID</span>
-          <span class="info-val" style="font-family:monospace;color:#1e4620;"><?= htmlspecialchars($payInId) ?></span>
+          <span class="info-val" style="font-family:monospace;color:#92400e;"><?= htmlspecialchars($payInId) ?></span>
         </div>
         <div>
           <span class="info-lbl">Date</span>

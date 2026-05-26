@@ -107,7 +107,8 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               </tr>
             </tfoot>
           </table>
-          <div class="px-3 py-2 border-top text-end" style="background:#fafafa;">
+          <div id="shifts-pagination"></div>
+          <div class="px-3 py-2 text-end border-top" style="background:#fafafa;">
             <a href="<?= url('views/pay-in/pos-shift-history.php') ?>" style="font-size:.8rem;color:#1e4620;font-weight:600;">View all shifts &rarr;</a>
           </div>
         </div>
@@ -137,7 +138,8 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               </tr>
             </tfoot>
           </table>
-          <div class="px-3 py-2 border-top text-end" style="background:#fafafa;">
+          <div id="payins-pagination"></div>
+          <div class="px-3 py-2 text-end border-top" style="background:#fafafa;">
             <a href="<?= url('views/pay-in/pay-in-list.php') ?>" style="font-size:.8rem;color:#b45309;font-weight:600;">View all pay-ins &rarr;</a>
           </div>
         </div>
@@ -152,14 +154,46 @@ var SHIFTS_URL      = "<?= url('api/pay-in/shifts.php') ?>";
 var PAY_IN_VIEW_URL = "<?= url('views/pay-in/pay-in-view.php') ?>";
 var PAY_IN_DATA     = <?= json_encode($recentPayIns, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 var activeTab       = 'shifts';
+var shiftsPager, payinsPager;
+
+// ---- Row renderers ----
+function renderShiftRow(r) {
+    return '<tr>'
+        + '<td><span class="badge bg-blue-lt text-blue" style="font-family:monospace;font-size:.75rem;">' + r.shift_id + '</span></td>'
+        + '<td>' + (r.cashier_name || '<span class="text-muted">Unknown</span>') + '</td>'
+        + '<td style="font-size:.84rem;">' + fmtDt(r.shift_start) + '</td>'
+        + '<td style="font-size:.84rem;">' + fmtDt(r.shift_end) + '</td>'
+        + '<td class="text-end">' + parseInt(r.transaction_count || 0).toLocaleString() + '</td>'
+        + '<td class="text-end fw-semibold">BZD ' + fmt(r.total_amount) + '</td>'
+        + '</tr>';
+}
+
+function renderPayInRow(p) {
+    var badge = p.status === 'verified'
+        ? '<span class="badge bg-success-lt text-success" style="font-size:.7rem;">Verified</span>'
+        : (p.status === 'rejected'
+            ? '<span class="badge bg-danger-lt text-danger" style="font-size:.7rem;">Rejected</span>'
+            : '<span class="badge bg-yellow-lt text-yellow" style="font-size:.7rem;">Submitted</span>');
+    var dept    = p.department_name || '<span class="text-muted fst-italic">Walk-in</span>';
+    var cashier = (p.cashier_name && p.cashier_name.trim()) ? p.cashier_name.trim() : '—';
+    return '<tr>'
+        + '<td><code class="text-muted" style="font-size:.78rem;">' + p.pay_in_id + '</code></td>'
+        + '<td class="fw-medium">' + dept + '</td>'
+        + '<td style="font-size:.84rem;">' + p.pay_in_date + '</td>'
+        + '<td style="font-size:.84rem;">' + cashier + '</td>'
+        + '<td class="text-end fw-semibold">BZD ' + fmt(p.total_amount) + '</td>'
+        + '<td class="text-center">' + badge + '</td>'
+        + '<td><a href="' + PAY_IN_VIEW_URL + '?id=' + encodeURIComponent(p.pay_in_id) + '" class="btn btn-xs btn-outline-secondary">View</a></td>'
+        + '</tr>';
+}
 
 // ---- Tab switching ----
 function switchTab(tab) {
     activeTab = tab;
-    var paneShifts  = document.getElementById('pane-shifts');
-    var panePayins  = document.getElementById('pane-payins');
-    var btnShifts   = document.getElementById('tab-btn-shifts');
-    var btnPayins   = document.getElementById('tab-btn-payins');
+    var paneShifts = document.getElementById('pane-shifts');
+    var panePayins = document.getElementById('pane-payins');
+    var btnShifts  = document.getElementById('tab-btn-shifts');
+    var btnPayins  = document.getElementById('tab-btn-payins');
 
     if (tab === 'shifts') {
         paneShifts.style.display = '';
@@ -203,38 +237,27 @@ function loadShifts() {
     var tfooter = document.getElementById('shifts-footer');
     tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Loading&hellip;</td></tr>';
     tfooter.style.display = 'none';
+    document.getElementById('shifts-pagination').innerHTML = '';
 
     apiGet(reqUrl).then(function(res) {
         var rows = res.data || [];
-        if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No shifts found for this period.</td></tr>';
-            return;
-        }
-        var html = '', grand = 0;
-        rows.forEach(function(r) {
-            grand += parseFloat(r.total_amount || 0);
-            html += '<tr>'
-                + '<td><span class="badge bg-blue-lt text-blue" style="font-family:monospace;font-size:.75rem;">' + r.shift_id + '</span></td>'
-                + '<td>' + (r.cashier_name || '<span class="text-muted">Unknown</span>') + '</td>'
-                + '<td style="font-size:.84rem;">' + fmtDt(r.shift_start) + '</td>'
-                + '<td style="font-size:.84rem;">' + fmtDt(r.shift_end) + '</td>'
-                + '<td class="text-end">' + parseInt(r.transaction_count || 0).toLocaleString() + '</td>'
-                + '<td class="text-end fw-semibold">BZD ' + fmt(r.total_amount) + '</td>'
-                + '</tr>';
-        });
-        tbody.innerHTML = html;
+        shiftsPager.setData(rows);
+
+        // Grand total across all rows (not just current page)
+        var grand = 0;
+        rows.forEach(function(r) { grand += parseFloat(r.total_amount || 0); });
         document.getElementById('shifts-grand').textContent = 'BZD ' + fmt(grand);
-        tfooter.style.display = 'table-footer-group';
+        tfooter.style.display = rows.length ? 'table-footer-group' : 'none';
     }).catch(function(e) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Error loading shifts: ' + e.message + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Error: ' + e.message + '</td></tr>';
+        tfooter.style.display = 'none';
     });
 }
 
-// ---- Pay-In History (client-side filter from embedded data) ----
+// ---- Pay-In History ----
 function renderPayIns() {
     var dateFrom = document.getElementById('filter-date-from').value;
     var dateTo   = document.getElementById('filter-date-to').value;
-    var tbody    = document.getElementById('payins-body');
     var tfooter  = document.getElementById('payins-footer');
 
     var rows = PAY_IN_DATA.filter(function(p) {
@@ -243,35 +266,13 @@ function renderPayIns() {
         return true;
     });
 
-    if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No pay-ins found for this period.</td></tr>';
-        tfooter.style.display = 'none';
-        return;
-    }
+    payinsPager.setData(rows);
 
-    var html = '', grand = 0;
-    rows.forEach(function(p) {
-        grand += parseFloat(p.total_amount || 0);
-        var badge = p.status === 'verified'
-            ? '<span class="badge bg-success-lt text-success" style="font-size:.7rem;">Verified</span>'
-            : (p.status === 'rejected'
-                ? '<span class="badge bg-danger-lt text-danger" style="font-size:.7rem;">Rejected</span>'
-                : '<span class="badge bg-yellow-lt text-yellow" style="font-size:.7rem;">Submitted</span>');
-        var dept    = p.department_name || '<span class="text-muted fst-italic">Walk-in</span>';
-        var cashier = (p.cashier_name && p.cashier_name.trim()) ? p.cashier_name.trim() : '—';
-        html += '<tr>'
-            + '<td><code class="text-muted" style="font-size:.78rem;">' + p.pay_in_id + '</code></td>'
-            + '<td class="fw-medium">' + dept + '</td>'
-            + '<td style="font-size:.84rem;">' + p.pay_in_date + '</td>'
-            + '<td style="font-size:.84rem;">' + cashier + '</td>'
-            + '<td class="text-end fw-semibold">BZD ' + fmt(p.total_amount) + '</td>'
-            + '<td class="text-center">' + badge + '</td>'
-            + '<td><a href="' + PAY_IN_VIEW_URL + '?id=' + encodeURIComponent(p.pay_in_id) + '" class="btn btn-xs btn-outline-secondary">View</a></td>'
-            + '</tr>';
-    });
-    tbody.innerHTML = html;
+    // Grand total across all filtered rows (not just current page)
+    var grand = 0;
+    rows.forEach(function(p) { grand += parseFloat(p.total_amount || 0); });
     document.getElementById('payins-grand').textContent = 'BZD ' + fmt(grand);
-    tfooter.style.display = 'table-footer-group';
+    tfooter.style.display = rows.length ? 'table-footer-group' : 'none';
 }
 
 // ---- Filter controls ----
@@ -290,6 +291,20 @@ document.getElementById('refresh-btn').addEventListener('click', function() {
     if (activeTab === 'shifts') loadShifts(); else renderPayIns();
 });
 
-document.addEventListener('DOMContentLoaded', function() { switchTab('shifts'); });
+document.addEventListener('DOMContentLoaded', function() {
+    shiftsPager = new TablePager({
+        tbodyId:      'shifts-body',
+        paginationId: 'shifts-pagination',
+        colCount:     6,
+        renderRow:    renderShiftRow
+    });
+    payinsPager = new TablePager({
+        tbodyId:      'payins-body',
+        paginationId: 'payins-pagination',
+        colCount:     7,
+        renderRow:    renderPayInRow
+    });
+    switchTab('shifts');
+});
 </script>
 <?php require_once __DIR__ . '/../../includes/layout-tabler-footer.php'; ?>

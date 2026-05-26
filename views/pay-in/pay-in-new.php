@@ -205,12 +205,12 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
   <div class="container-xl">
 
     <!-- Page header -->
-    <div class="card mb-4" style="border-left:4px solid var(--tblr-success);">
+    <div class="card mb-4" style="border-left:4px solid #b45309;background:linear-gradient(135deg,#fffbeb 0%,#fff 60%);">
       <div class="card-body py-3">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
-            <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.63rem;letter-spacing:.1em;">Pay-In &middot; Revenue Collection</div>
-            <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">New Pay-In</div>
+            <div class="text-uppercase fw-semibold mb-1" style="font-size:.63rem;letter-spacing:.1em;color:#b45309;">Pay-In &middot; Revenue Collection &middot; Belize Dollar (BZD)</div>
+            <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;color:#78350f;">New Pay-In</div>
           </div>
           <div class="d-flex align-items-center gap-3">
             <span class="text-muted" style="font-size:.82rem;">Cashier: <strong><?= htmlspecialchars($userName) ?></strong></span>
@@ -271,10 +271,10 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 
           <!-- Cash Breakdown -->
           <div class="card mb-4">
-            <div class="card-header">
-              <div class="card-title">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1 text-success" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-                Cash Breakdown
+            <div class="card-header" style="background:linear-gradient(135deg,#92400e 0%,#b45309 100%);color:#fff;">
+              <div class="card-title text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                Cash Breakdown &mdash; Belize Dollar (BZD)
               </div>
             </div>
             <div class="card-body">
@@ -282,25 +282,24 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 
                 <!-- Bills -->
                 <div class="col-md-7">
-                  <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.7rem;letter-spacing:.07em;">Notes (Bills)</div>
+                  <div class="text-uppercase fw-semibold mb-2" style="font-size:.7rem;letter-spacing:.07em;color:#92400e;">Notes (Bills)</div>
                   <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-dark">
+                    <thead style="background:#92400e;color:#fff;">
                       <tr>
                         <th>Denomination</th>
                         <th class="text-center" style="width:90px;">Count</th>
-                        <th class="text-end" style="width:100px;">Value</th>
+                        <th class="text-end" style="width:100px;">Value (BZD)</th>
                       </tr>
                     </thead>
                     <tbody>
                       <?php
                       $billDenoms = [
-                          ['d_100', 100, '$100.00'],
-                          ['d_50',   50, '$50.00'],
-                          ['d_20',   20, '$20.00'],
-                          ['d_10',   10, '$10.00'],
-                          ['d_5',     5, '$5.00'],
-                          ['d_2',     2, '$2.00'],
-                          ['d_1',     1, '$1.00'],
+                          ['d_100', 100, 'BZD $100'],
+                          ['d_50',   50, 'BZD $50'],
+                          ['d_20',   20, 'BZD $20'],
+                          ['d_10',   10, 'BZD $10'],
+                          ['d_5',     5, 'BZD $5'],
+                          ['d_2',     2, 'BZD $2'],
                       ];
                       foreach ($billDenoms as $bd):
                       ?>
@@ -317,9 +316,9 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
                       <?php endforeach; ?>
                     </tbody>
                     <tfoot>
-                      <tr class="table-success">
-                        <td colspan="2" class="fw-bold">Bills Sub-total</td>
-                        <td class="text-end fw-bold" id="bills-subtotal">BZD $0.00</td>
+                      <tr style="background:#fef3c7;">
+                        <td colspan="2" class="fw-bold" style="color:#78350f;">Bills Sub-total</td>
+                        <td class="text-end fw-bold" id="bills-subtotal" style="color:#78350f;">BZD $0.00</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -327,23 +326,24 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 
                 <!-- Coins -->
                 <div class="col-md-5">
-                  <div class="text-uppercase fw-semibold text-muted mb-2" style="font-size:.7rem;letter-spacing:.07em;">Coins</div>
+                  <div class="text-uppercase fw-semibold mb-2" style="font-size:.7rem;letter-spacing:.07em;color:#92400e;">Coins</div>
                   <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-dark">
+                    <thead style="background:#92400e;color:#fff;">
                       <tr>
                         <th>Denomination</th>
                         <th class="text-center" style="width:80px;">Count</th>
-                        <th class="text-end" style="width:90px;">Value</th>
+                        <th class="text-end" style="width:90px;">Value (BZD)</th>
                       </tr>
                     </thead>
                     <tbody>
                       <?php
                       $coinDenoms = [
-                          ['c_50', 0.50, '¢0.50'],
-                          ['c_25', 0.25, '¢0.25'],
-                          ['c_10', 0.10, '¢0.10'],
-                          ['c_5',  0.05, '¢0.05'],
-                          ['c_1',  0.01, '¢0.01'],
+                          ['d_1',  1.00, '$1.00'],
+                          ['c_50', 0.50, '$0.50'],
+                          ['c_25', 0.25, '$0.25'],
+                          ['c_10', 0.10, '$0.10'],
+                          ['c_5',  0.05, '$0.05'],
+                          ['c_1',  0.01, '$0.01'],
                       ];
                       foreach ($coinDenoms as $cd):
                       ?>
@@ -360,9 +360,9 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
                       <?php endforeach; ?>
                     </tbody>
                     <tfoot>
-                      <tr style="background:#dbeafe;">
-                        <td colspan="2" class="fw-bold">Coins Sub-total</td>
-                        <td class="text-end fw-bold" id="coins-subtotal">BZD $0.00</td>
+                      <tr style="background:#fef3c7;">
+                        <td colspan="2" class="fw-bold" style="color:#78350f;">Coins Sub-total</td>
+                        <td class="text-end fw-bold" id="coins-subtotal" style="color:#78350f;">BZD $0.00</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -372,7 +372,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 
               <!-- Cash total bar -->
               <div class="d-flex justify-content-between align-items-center mt-3 p-3 rounded"
-                   style="background:#1e4620;color:#fff;">
+                   style="background:linear-gradient(135deg,#92400e 0%,#b45309 100%);color:#fff;">
                 <span class="fw-bold text-uppercase" style="letter-spacing:.07em;font-size:.85rem;">Cash Total</span>
                 <span class="fw-black fs-4" id="cash-total-disp">BZD $0.00</span>
               </div>
@@ -451,8 +451,8 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
           </div>
 
           <!-- Grand Total Summary -->
-          <div class="card" style="border:2px solid #1e4620;position:sticky;top:1rem;">
-            <div class="card-header" style="background:#1e4620;color:#fff;">
+          <div class="card" style="border:2px solid #b45309;position:sticky;top:1rem;">
+            <div class="card-header" style="background:linear-gradient(135deg,#92400e 0%,#b45309 100%);color:#fff;">
               <div class="card-title text-white fw-bold">Pay-In Summary</div>
             </div>
             <div class="card-body p-3">
@@ -466,11 +466,12 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               </div>
               <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                 <span class="fw-bold text-uppercase" style="letter-spacing:.05em;font-size:.85rem;">Grand Total</span>
-                <span class="fw-black fs-3" id="sum-grand" style="color:#1e4620;">BZD $0.00</span>
+                <span class="fw-black fs-3" id="sum-grand" style="color:#92400e;">BZD $0.00</span>
               </div>
             </div>
-            <div class="card-footer">
-              <button type="submit" class="btn btn-success w-100 fw-bold" id="btn-submit">
+            <div class="card-footer" style="background:#fef3c7;">
+              <button type="submit" class="btn w-100 fw-bold" id="btn-submit"
+                      style="background:linear-gradient(135deg,#92400e 0%,#b45309 100%);color:#fff;border:none;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                 Submit Pay-In
               </button>
@@ -496,10 +497,10 @@ var BILL_DENOMS = [
     {id:'d_20',  val:20},
     {id:'d_10',  val:10},
     {id:'d_5',   val:5},
-    {id:'d_2',   val:2},
-    {id:'d_1',   val:1}
+    {id:'d_2',   val:2}
 ];
 var COIN_DENOMS = [
+    {id:'d_1',  val:1.00},
     {id:'c_50', val:0.50},
     {id:'c_25', val:0.25},
     {id:'c_10', val:0.10},

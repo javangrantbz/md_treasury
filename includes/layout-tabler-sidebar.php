@@ -137,7 +137,7 @@ $iconNsb      = '<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24"
             <ul class="navbar-nav pt-lg-2">
                 <?php echo tablerNavLink(url('views/portal/index.php'), 'Portal', $iconPortal, $currentUri); ?>
                 <?php echo tablerNavLink(url('views/cashiering/dashboard.php'), 'Cashiering', $iconDashboard, $currentUri); ?>
-                <?php echo tablerNavLink(url('views/pay-in/index.php'), 'Pay-In (POS) Reporting', $iconPayIn, $currentUri); ?>
+                <?php echo tablerNavLink(url('views/pay-in/index.php'), 'Pay-In/POS Reporting', $iconPayIn, $currentUri); ?>
                 <?php echo tablerNavLink(url('views/nsb/dashboard.php'), 'National Savings Bank', $iconNsb, $currentUri); ?>
             </ul>
             <div class="mt-auto pt-3 border-top">

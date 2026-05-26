@@ -75,7 +75,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               <p>The Portal is your central landing page after login. It provides access to all system modules based on your assigned role.</p>
               <ul class="mb-0">
                 <li class="mb-1"><strong>Cashiering</strong> — Active. Click to enter the cashiering module.</li>
-                <li class="mb-1"><strong>Pay-In (POS)</strong> — Pending integration. Will be available in a future release.</li>
+                <li class="mb-1"><strong>Pay-In/POS</strong> — Pending integration. Will be available in a future release.</li>
                 <li><strong>National Savings Bank</strong> — Pending integration.</li>
               </ul>
             </div>

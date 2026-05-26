@@ -106,7 +106,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
                                     </svg>
                                 </span>
                                 <div>
-                                    <div class="fw-bold fs-4">Pay-In (POS)</div>
+                                    <div class="fw-bold fs-4">Pay-In/POS</div>
                                     <span class="badge bg-warning-lt text-warning">Pending Integration</span>
                                 </div>
                             </div>

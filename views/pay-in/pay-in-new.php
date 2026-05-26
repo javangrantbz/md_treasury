@@ -204,18 +204,51 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 <div class="page-body">
   <div class="container-xl">
 
+    <form method="post" enctype="multipart/form-data" id="payin-form">
+
     <!-- Page header -->
     <div class="card mb-4" style="border-left:4px solid #b45309;background:linear-gradient(135deg,#fffbeb 0%,#fff 60%);">
       <div class="card-body py-3">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <div>
+        <div class="d-flex align-items-center flex-wrap gap-3">
+
+          <!-- Title -->
+          <div style="flex-shrink:0;">
             <div class="text-uppercase fw-semibold mb-1" style="font-size:.63rem;letter-spacing:.1em;color:#b45309;">Pay-In &middot; Revenue Collection &middot; Belize Dollar (BZD)</div>
             <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;color:#78350f;">New Pay-In</div>
           </div>
-          <div class="d-flex align-items-center gap-3">
+
+          <!-- Vertical divider -->
+          <div style="width:1px;background:#e9c97e;align-self:stretch;flex-shrink:0;margin:0 .25rem;"></div>
+
+          <!-- Department + Date -->
+          <div class="d-flex flex-wrap gap-3 align-items-end" style="flex:1;min-width:0;">
+            <div style="min-width:220px;flex:1;">
+              <label class="form-label form-label-sm mb-1 required">Department</label>
+              <select name="department_id" id="department_id" class="form-select form-select-sm">
+                <option value="">— Walk-in / Unspecified —</option>
+                <?php foreach ($departments as $d): ?>
+                <option value="<?= (int)$d['id'] ?>"
+                  <?= ((int)$d['id'] === (int)fv('department_id')) ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($d['name']) ?>
+                  <?= $d['code'] ? '(' . htmlspecialchars($d['code']) . ')' : '' ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
+              <input type="hidden" name="department_name" id="department_name" value="<?= fv('department_name') ?>">
+            </div>
+            <div style="flex-shrink:0;">
+              <label class="form-label form-label-sm mb-1 required">Pay-In Date</label>
+              <input type="date" name="pay_in_date" class="form-control form-control-sm"
+                     value="<?= fv('pay_in_date', date('Y-m-d')) ?>">
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex align-items-center gap-3 ms-auto" style="flex-shrink:0;">
             <span class="text-muted" style="font-size:.82rem;">Cashier: <strong><?= htmlspecialchars($userName) ?></strong></span>
             <a href="<?= url('views/pay-in/pay-in-list.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Pay-In List</a>
           </div>
+
         </div>
       </div>
     </div>
@@ -231,43 +264,10 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
     </div>
     <?php endif; ?>
 
-    <form method="post" enctype="multipart/form-data" id="payin-form">
-
       <div class="row g-4">
 
-        <!-- Left column: Info + Denominations -->
+        <!-- Left column: Denominations -->
         <div class="col-lg-8">
-
-          <!-- Pay-in details -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <div class="card-title">Pay-In Details</div>
-            </div>
-            <div class="card-body">
-              <div class="row g-3">
-                <div class="col-md-8">
-                  <label class="form-label required">Department</label>
-                  <select name="department_id" id="department_id" class="form-select">
-                    <option value="">— Walk-in / Unspecified —</option>
-                    <?php foreach ($departments as $d): ?>
-                    <option value="<?= (int)$d['id'] ?>"
-                      <?= ((int)$d['id'] === (int)fv('department_id')) ? 'selected' : '' ?>>
-                      <?= htmlspecialchars($d['name']) ?>
-                      <?= $d['code'] ? '(' . htmlspecialchars($d['code']) . ')' : '' ?>
-                    </option>
-                    <?php endforeach; ?>
-                  </select>
-                  <!-- Hidden: capture dept name for denormalized snapshot -->
-                  <input type="hidden" name="department_name" id="department_name" value="<?= fv('department_name') ?>">
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label required">Pay-In Date</label>
-                  <input type="date" name="pay_in_date" class="form-control"
-                         value="<?= fv('pay_in_date', date('Y-m-d')) ?>">
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- Cash Breakdown -->
           <div class="card mb-4">

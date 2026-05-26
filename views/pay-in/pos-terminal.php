@@ -670,6 +670,15 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
 
     <div style="flex:1;"></div>
 
+    <!-- New Pay-In shortcut -->
+    <a href="<?= url('views/pay-in/pay-in-new.php') ?>" target="_blank"
+       style="display:flex;align-items:center;gap:5px;margin-right:10px;padding:5px 11px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.04em;flex-shrink:0;transition:background .15s,color .15s;"
+       onmouseover="this.style.background='rgba(255,255,255,.15)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.75)'">
+      <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Pay-In
+      <svg style="width:9px;height:9px;opacity:.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </a>
+
     <!-- Cashier -->
     <div style="display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid rgba(255,255,255,.1);flex-shrink:0;">
       <div style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">

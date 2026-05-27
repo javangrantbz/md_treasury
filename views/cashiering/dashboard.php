@@ -15,90 +15,51 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
   <div class="page-body">
     <div class="container-xl">
 
-      <!-- Page identity card -->
-      <div class="card mb-4" style="border-left: 4px solid var(--tblr-primary);">
+      <!-- Page identity card with inline KPIs -->
+      <div class="card mb-4" style="border-left:4px solid var(--tblr-primary);">
         <div class="card-body py-3">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
+          <div class="d-flex align-items-center flex-wrap gap-2">
+
+            <!-- Title -->
+            <div style="flex-shrink:0;">
               <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Government of Belize &middot; Treasury Department</div>
               <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Cashiering Module</div>
             </div>
-            <a href="https://pos.treasuryconnect.biz/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-              Treasury POS
-            </a>
-          </div>
-        </div>
-      </div>
 
-      <!-- KPI cards — live from POS -->
-      <div class="row row-cards g-3 mb-4">
-        <div class="col-sm-6 col-lg-3">
-          <div class="card card-sm">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-auto">
-                  <span class="bg-primary text-white avatar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                  </span>
-                </div>
-                <div class="col">
-                  <div class="text-muted" style="font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;">Receipts Today</div>
-                  <div class="h3 mb-0" id="kpi-receipts">—</div>
-                </div>
+            <!-- Vertical divider -->
+            <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 .5rem;"></div>
+
+            <!-- KPI stats -->
+            <div class="d-flex align-items-center flex-wrap gap-0" style="flex:1;min-width:0;">
+
+              <div style="padding:0 18px;flex-shrink:0;">
+                <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Receipts Today</div>
+                <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-primary);" id="kpi-receipts">—</div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="card card-sm">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-auto">
-                  <span class="bg-success text-white avatar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                  </span>
-                </div>
-                <div class="col">
-                  <div class="text-muted" style="font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;">Revenue Today</div>
-                  <div class="h3 mb-0" id="kpi-revenue">—</div>
-                </div>
+
+              <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+
+              <div style="padding:0 18px;flex-shrink:0;">
+                <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Revenue Today</div>
+                <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);" id="kpi-revenue">—</div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="card card-sm">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-auto">
-                  <span class="bg-success-lt avatar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                  </span>
-                </div>
-                <div class="col">
-                  <div class="text-muted" style="font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;">Completed Today</div>
-                  <div class="h3 mb-0" id="kpi-completed">—</div>
-                </div>
+
+              <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+
+              <div style="padding:0 18px;flex-shrink:0;">
+                <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Completed</div>
+                <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);" id="kpi-completed">—</div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="card card-sm">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-auto">
-                  <span class="bg-danger-lt avatar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tblr-danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                  </span>
-                </div>
-                <div class="col">
-                  <div class="text-muted" style="font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;">Voids / Refunds</div>
-                  <div class="h3 mb-0" id="kpi-voided">—</div>
-                </div>
+
+              <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+
+              <div style="padding:0 18px;flex-shrink:0;">
+                <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Voids / Refunds</div>
+                <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-danger);" id="kpi-voided">—</div>
               </div>
+
             </div>
+
           </div>
         </div>
       </div>

@@ -51,7 +51,7 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
               <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 12px 4px;white-space:nowrap;">Accounts &amp; Transactions</div>
               <div style="display:flex;align-items:center;">
                 <div style="padding:0 12px;flex-shrink:0;">
-                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;max-width:52px;line-height:1.2;">Active Accounts</div>
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;white-space:nowrap;">Active Accounts</div>
                   <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-body-color);">—</div>
                 </div>
                 <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>

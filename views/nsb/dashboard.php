@@ -10,15 +10,83 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
   <div class="page-body">
     <div class="container-xl">
 
-      <!-- Page identity card -->
-      <div class="card mb-4" style="border-left: 4px solid var(--tblr-primary);">
+      <!-- Page identity card with inline KPIs -->
+      <div class="card mb-4" style="border-left:4px solid var(--tblr-primary);">
         <div class="card-body py-3">
-          <div class="d-flex align-items-center gap-3">
-            <img src="<?= url('assets/img/nsb-logo.png') ?>" alt="NSB Logo" style="height:32px;width:auto;flex-shrink:0;">
-            <div>
-              <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Government of Belize &middot; Treasury Department</div>
-              <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">National Savings Bank</div>
+          <div class="d-flex align-items-center flex-wrap gap-2">
+
+            <!-- Logo + Title -->
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <img src="<?= url('assets/img/nsb-logo.png') ?>" alt="NSB Logo" style="height:32px;width:auto;flex-shrink:0;">
+              <div>
+                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Government of Belize &middot; Treasury Department</div>
+                <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">National Savings Bank</div>
+              </div>
             </div>
+
+            <!-- Vertical divider -->
+            <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 .5rem;"></div>
+
+            <!-- Stats -->
+            <div style="display:flex;align-items:stretch;flex-wrap:wrap;flex:1;min-width:0;">
+
+              <!-- Group: Card Applications -->
+              <div style="flex-shrink:0;">
+                <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 14px 4px;">Card Applications</div>
+                <div style="display:flex;align-items:center;">
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">New</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-azure);">—</div>
+                  </div>
+                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Approved</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);">—</div>
+                  </div>
+                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Shipped</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-cyan);">—</div>
+                  </div>
+                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Activated</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-green);">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Group divider -->
+              <div style="width:2px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 4px;"></div>
+
+              <!-- Group: Accounts & Transactions -->
+              <div style="flex-shrink:0;">
+                <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 14px 4px;">Accounts &amp; Transactions</div>
+                <div style="display:flex;align-items:center;">
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Active Accounts</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-body-color);">—</div>
+                  </div>
+                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Deposits</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);">—</div>
+                  </div>
+                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Withdrawals</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-danger);">—</div>
+                  </div>
+                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                  <div style="padding:0 14px;flex-shrink:0;">
+                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Net Balance</div>
+                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-primary);">—</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </div>
       </div>
@@ -27,62 +95,6 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
       <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-4" role="alert">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon text-info flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 9h.01M11 12h1v4h1"/></svg>
         <span style="font-size:.85rem;">Live data will populate once the NSB database integration is connected. Figures below are placeholders.</span>
-      </div>
-
-      <!-- Combined stats row -->
-      <div class="card mb-4">
-        <div class="d-flex flex-wrap" style="overflow-x:auto;">
-
-          <!-- Group: Card Applications -->
-          <div class="d-flex flex-column flex-shrink-0" style="min-width:0;">
-            <div class="px-3 pt-2 pb-1 text-uppercase fw-semibold text-muted" style="font-size:.63rem;letter-spacing:.08em;white-space:nowrap;">Card Applications</div>
-            <div class="d-flex">
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">New</div>
-                <div class="fw-bold text-azure" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Approved</div>
-                <div class="fw-bold text-success" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Shipped</div>
-                <div class="fw-bold text-cyan" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Activated</div>
-                <div class="fw-bold text-green" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Divider -->
-          <div class="border-start my-3"></div>
-
-          <!-- Group: Accounts & Transactions -->
-          <div class="d-flex flex-column flex-shrink-0" style="min-width:0;">
-            <div class="px-3 pt-2 pb-1 text-uppercase fw-semibold text-muted" style="font-size:.63rem;letter-spacing:.08em;white-space:nowrap;">Accounts &amp; Transactions</div>
-            <div class="d-flex">
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Active Accounts</div>
-                <div class="fw-bold" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Deposits</div>
-                <div class="fw-bold text-success" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-              <div class="px-3 pb-3 pt-1 border-end">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Withdrawals</div>
-                <div class="fw-bold text-danger" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-              <div class="px-3 pb-3 pt-1">
-                <div class="text-muted mb-1" style="font-size:.7rem;white-space:nowrap;">Net Balance</div>
-                <div class="fw-bold text-primary" style="font-size:1.35rem;line-height:1;">—</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
       </div>
 
       <!-- Quick access -->

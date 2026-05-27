@@ -98,7 +98,6 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
                 <div class="text-uppercase text-muted fw-semibold mb-2" style="font-size:.72rem;letter-spacing:.08em;">Applications</div>
                 <?php foreach ([
                   ['New Applications',      url('views/nsb/applications/new.php')],
-                  ['Approved Applications', url('views/nsb/applications/approved.php')],
                   ['Process Card Request',  url('views/nsb/applications/process-card.php')],
                   ['Full Application List', url('views/nsb/applications/index.php')],
                 ] as [$label, $path]): ?>

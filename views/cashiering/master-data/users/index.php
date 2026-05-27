@@ -45,12 +45,13 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
                 <th data-col="email">Email</th>
                 <th data-col="role_name">Role</th>
                 <th data-col="user_type">Type</th>
+                <th data-col="auth_source">Auth</th>
                 <th data-col="status">Status</th>
                 <th class="w-1"></th>
               </tr>
             </thead>
             <tbody id="table-body">
-              <tr><td colspan="7" class="text-center py-4 text-muted">Loading...</td></tr>
+              <tr><td colspan="8" class="text-center py-4 text-muted">Loading...</td></tr>
             </tbody>
           </table>
           <div id="table-pagination"></div>
@@ -195,6 +196,15 @@ function statusBadge(val) {
     : '<span class="badge bg-secondary-lt text-secondary">Inactive</span>';
 }
 
+function authBadge(source) {
+  if (source === 'microsoft') {
+    return '<span class="badge bg-info-lt text-info d-flex align-items-center gap-1" style="width:fit-content">' +
+           '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>' +
+           'Microsoft</span>';
+  }
+  return '<span class="badge bg-secondary-lt text-secondary">Local</span>';
+}
+
 function applyAuthToggle(authSource) {
   var isMs = authSource === 'microsoft';
   document.getElementById('add-local-fields').style.display    = isMs ? 'none' : '';
@@ -241,6 +251,7 @@ function renderRow(r) {
     '<td>' + (r.email || '') + '</td>' +
     '<td>' + (r.role_name || '—') + '</td>' +
     '<td style="text-transform:capitalize">' + (r.user_type || '') + '</td>' +
+    '<td>' + authBadge(r.auth_source) + '</td>' +
     '<td>' + statusBadge(r.status) + '</td>' +
     '<td><a href="' + DETAILS_PAGE + '?id=' + r.id + '" class="btn btn-sm btn-outline-secondary">Open &#8594;</a></td>' +
     '</tr>';
@@ -289,7 +300,7 @@ document.getElementById('modal-add').addEventListener('hidden.bs.modal', functio
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-  window.pager = new TablePager({ tbodyId: 'table-body', paginationId: 'table-pagination', colCount: 7, renderRow: renderRow });
+  window.pager = new TablePager({ tbodyId: 'table-body', paginationId: 'table-pagination', colCount: 8, renderRow: renderRow });
   loadRows();
   loadRoleOptions();
 });

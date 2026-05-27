@@ -13,78 +13,63 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
       <!-- Page identity card with inline KPIs -->
       <div class="card mb-4" style="border-left:4px solid var(--tblr-primary);">
         <div class="card-body py-3">
-          <div class="d-flex align-items-center flex-wrap gap-2">
+          <div style="display:flex;align-items:center;flex-wrap:nowrap;overflow-x:auto;gap:0;">
 
             <!-- Logo + Title -->
-            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-right:.5rem;">
               <img src="<?= url('assets/img/nsb-logo.png') ?>" alt="NSB Logo" style="height:32px;width:auto;flex-shrink:0;">
               <div>
-                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Government of Belize &middot; Treasury Department</div>
-                <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">National Savings Bank</div>
+                <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;white-space:nowrap;">Government of Belize &middot; Treasury Department</div>
+                <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;white-space:nowrap;">National Savings Bank</div>
               </div>
             </div>
 
             <!-- Vertical divider -->
-            <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 .5rem;"></div>
+            <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 .75rem;"></div>
 
-            <!-- Stats -->
-            <div style="display:flex;align-items:stretch;flex-wrap:wrap;flex:1;min-width:0;">
-
-              <!-- Group: Card Applications -->
-              <div style="flex-shrink:0;">
-                <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 14px 4px;">Card Applications</div>
-                <div style="display:flex;align-items:center;">
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">New</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-azure);">—</div>
-                  </div>
-                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Approved</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);">—</div>
-                  </div>
-                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Shipped</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-cyan);">—</div>
-                  </div>
-                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Activated</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-green);">—</div>
-                  </div>
+            <!-- Group: Card Applications -->
+            <div style="flex-shrink:0;">
+              <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 12px 4px;white-space:nowrap;">Card Applications</div>
+              <div style="display:flex;align-items:center;">
+                <div style="padding:0 12px;flex-shrink:0;">
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;white-space:nowrap;">New</div>
+                  <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-azure);">—</div>
+                </div>
+                <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                <div style="padding:0 12px;flex-shrink:0;">
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;white-space:nowrap;">Approved</div>
+                  <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);">—</div>
                 </div>
               </div>
+            </div>
 
-              <!-- Group divider -->
-              <div style="width:2px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 4px;"></div>
+            <!-- Group divider -->
+            <div style="width:2px;background:#e2e8f0;align-self:stretch;flex-shrink:0;margin:0 4px;"></div>
 
-              <!-- Group: Accounts & Transactions -->
-              <div style="flex-shrink:0;">
-                <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 14px 4px;">Accounts &amp; Transactions</div>
-                <div style="display:flex;align-items:center;">
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Active Accounts</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-body-color);">—</div>
-                  </div>
-                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Deposits</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);">—</div>
-                  </div>
-                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Withdrawals</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-danger);">—</div>
-                  </div>
-                  <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
-                  <div style="padding:0 14px;flex-shrink:0;">
-                    <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;">Net Balance</div>
-                    <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-primary);">—</div>
-                  </div>
+            <!-- Group: Accounts & Transactions -->
+            <div style="flex-shrink:0;">
+              <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d1d5db;padding:0 12px 4px;white-space:nowrap;">Accounts &amp; Transactions</div>
+              <div style="display:flex;align-items:center;">
+                <div style="padding:0 12px;flex-shrink:0;">
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;max-width:52px;line-height:1.2;">Active Accounts</div>
+                  <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-body-color);">—</div>
+                </div>
+                <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                <div style="padding:0 12px;flex-shrink:0;">
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;white-space:nowrap;">Deposits</div>
+                  <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-success);">—</div>
+                </div>
+                <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                <div style="padding:0 12px;flex-shrink:0;">
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;white-space:nowrap;">Withdrawals</div>
+                  <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-danger);">—</div>
+                </div>
+                <div style="width:1px;background:#e2e8f0;align-self:stretch;flex-shrink:0;"></div>
+                <div style="padding:0 12px;flex-shrink:0;">
+                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#9ca3af;margin-bottom:3px;white-space:nowrap;">Net Balance</div>
+                  <div style="font-size:1.05rem;font-weight:900;line-height:1;color:var(--tblr-primary);">—</div>
                 </div>
               </div>
-
             </div>
 
           </div>

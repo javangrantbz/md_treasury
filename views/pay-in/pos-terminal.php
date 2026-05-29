@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $deptId     = isset($input['dept_id'])         ? (int)$input['dept_id']             : null;
         $deptName   = isset($input['dept_name'])       ? trim($input['dept_name'])          : null;
 
-        if (!$actId || $amount <= 0 || !$method) {
+        if (!$shiftId || !$actId || $amount <= 0 || !$method) {
             ob_end_clean();
             echo json_encode(['success'=>false,'message'=>'Missing required cart fields.']);
             exit;
@@ -266,6 +266,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $deptId = $ctx['department_id'];
         }
         try {
+            $existingStmt = $pdo->prepare("
+                SELECT customer_id, customer_name, dept_id, dept_name
+                FROM pos_cart_items
+                WHERE shift_id = :sid AND uid = :uid AND status = 'pending'
+                ORDER BY created_at ASC
+                LIMIT 1
+            ");
+            $existingStmt->execute(['sid'=>$shiftId,'uid'=>$userId]);
+            $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
+            if ($existing) {
+                $sameCustomer = (int)($existing['customer_id'] ?: 0) === (int)($custId ?: 0)
+                    && trim((string)($existing['customer_name'] ?: '')) === trim((string)($custName ?: ''));
+                $sameDept = (int)($existing['dept_id'] ?: 0) === (int)($deptId ?: 0)
+                    && trim((string)($existing['dept_name'] ?: '')) === trim((string)($deptName ?: ''));
+                if (!$sameCustomer || !$sameDept) {
+                    ob_end_clean();
+                    echo json_encode(['success'=>false,'message'=>'Open receipt already belongs to a different payer. Print or clear the current receipt first.']);
+                    exit;
+                }
+            }
+
             $uuid = bin2hex(random_bytes(16));
             $stmt = $pdo->prepare("
                 INSERT INTO pos_cart_items
@@ -302,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete_cart_item') {
         $itemId = isset($input['item_id']) ? (int)$input['item_id'] : 0;
         if (!$itemId) { ob_end_clean(); echo json_encode(['success'=>false,'message'=>'Missing item ID.']); exit; }
-        $stmt = $pdo->prepare("DELETE FROM pos_cart_items WHERE id = :id AND uid = :uid");
+        $stmt = $pdo->prepare("DELETE FROM pos_cart_items WHERE id = :id AND uid = :uid AND status = 'pending'");
         $stmt->execute(['id'=>$itemId,'uid'=>$userId]);
         ob_end_clean();
         echo json_encode(['success'=>true]);
@@ -759,7 +780,7 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
   <!-- Cart Right (40%) -->
   <div class="treasury-panel w-[40%] flex flex-col overflow-hidden">
     <div class="p-4 border-b border-gray-100 bg-slate-50">
-      <div class="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Transaction Detail</div>
+      <div class="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2">Open Receipt</div>
       <div id="payer-placeholder" class="text-sm text-gray-400 italic mb-2">No payer selected</div>
       <div id="payer-display" class="text-sm font-semibold text-gray-900 mb-2" style="display:none;"></div>
       <div class="flex gap-2">
@@ -778,19 +799,19 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
     </div>
     
     <div class="flex-1 overflow-y-auto p-4">
-      <div id="cart-empty" class="text-center text-gray-400 py-10 text-sm italic">Cart is empty. Select services to begin.</div>
+      <div id="cart-empty" class="text-center text-gray-400 py-10 text-sm italic">Receipt has no paid items yet. Select a service to begin.</div>
       <div id="cart-list" class="space-y-2" style="display:none;"></div>
     </div>
 
     <div class="p-4 border-t border-gray-100 bg-gray-50">
       <div class="flex justify-between items-end mb-4">
         <div>
-          <div class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Total Due</div>
+          <div class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Receipt Total</div>
           <div class="text-sm text-gray-700" id="cart-count">0 items</div>
         </div>
         <div class="text-2xl font-black text-[#1e4620]" id="cart-total">$0.00</div>
       </div>
-      <button id="btn-checkout" class="w-full py-3 bg-[#1e4620] text-white font-black uppercase rounded shadow-lg disabled:opacity-50">Checkout</button>
+      <button id="btn-checkout" class="w-full py-3 bg-[#1e4620] text-white font-black uppercase rounded shadow-lg disabled:opacity-50">Print Receipt</button>
     </div>
   </div>
 </div>
@@ -827,8 +848,88 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
         </div>
         <div class="flex gap-2">
           <button onclick="document.getElementById('amt-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm cursor-pointer">Cancel</button>
-          <button id="btn-amt-add" class="flex-1 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold cursor-pointer">Add to Cart</button>
+          <button id="btn-amt-add" class="flex-1 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold cursor-pointer">Continue</button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Service Payment -->
+<div id="service-payment-modal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="document.getElementById('service-payment-modal').classList.add('hidden')"></div>
+  <div class="absolute inset-0 flex items-start justify-center pt-6 px-4 pb-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[92vh]">
+      <div class="px-5 py-4 border-b flex items-center justify-between shrink-0">
+        <h3 class="text-base font-bold">Charge Service</h3>
+        <button onclick="document.getElementById('service-payment-modal').classList.add('hidden')" class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200"><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        <div>
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Service</div>
+          <div id="sp-item-card" class="space-y-2 bg-gray-50 rounded-xl p-3"></div>
+          <div class="flex justify-between items-center pt-3 px-3">
+            <span class="text-sm font-bold text-gray-700">Amount</span>
+            <span class="text-lg font-black text-gray-900" id="sp-total">$0.00</span>
+          </div>
+        </div>
+
+        <div class="border-t border-dashed"></div>
+
+        <div>
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payer</div>
+          <div id="sp-payer-display" class="text-sm font-semibold text-gray-700 bg-gray-50 rounded-xl px-4 py-3"></div>
+        </div>
+
+        <div class="border-t border-dashed"></div>
+
+        <div>
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Method *</div>
+          <div class="grid grid-cols-3 gap-2">
+            <button data-method="cash" class="sp-pay-btn flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-gray-700 text-[11px] font-medium cursor-pointer transition-all"><svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Cash</button>
+            <button data-method="check" class="sp-pay-btn flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-gray-700 text-[11px] font-medium cursor-pointer transition-all"><svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Check</button>
+            <button data-method="bank_deposit" class="sp-pay-btn flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-gray-700 text-[11px] font-medium cursor-pointer transition-all"><svg class="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Bank Deposit</button>
+            <button data-method="pos_terminal" class="sp-pay-btn flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-gray-700 text-[11px] font-medium cursor-pointer transition-all"><svg class="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>POS Terminal</button>
+            <button data-method="online_transfer" class="sp-pay-btn flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-gray-700 text-[11px] font-medium cursor-pointer transition-all"><svg class="w-5 h-5 text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Transfer</button>
+            <button data-method="e_invoicing" class="sp-pay-btn flex flex-col items-center gap-1 px-2 py-3 rounded-xl border text-gray-700 text-[11px] font-medium cursor-pointer transition-all"><svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>E-Invoice</button>
+          </div>
+        </div>
+
+        <div id="sp-pay-details" class="hidden space-y-3">
+          <div class="border-t border-dashed"></div>
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payment Details</div>
+          <div id="sp-pd-check" class="hidden space-y-3">
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Check Number *</label><input type="text" id="sp-check-number" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Bank Name *</label><input type="text" id="sp-check-bank" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Account Holder</label><input type="text" id="sp-check-holder" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+          </div>
+          <div id="sp-pd-bank-deposit" class="hidden space-y-3">
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Bank Account *</label><select id="sp-bd-bank" class="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm outline-none focus:border-brand-400 bg-gray-50"><option value="">— Select —</option></select></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Reference Number *</label><input type="text" id="sp-bd-ref" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Amount Deposited *</label><input type="number" id="sp-bd-amount" step="0.01" min="0" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+          </div>
+          <div id="sp-pd-online-transfer" class="hidden space-y-3">
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Bank Account *</label><select id="sp-ot-bank" class="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm outline-none focus:border-brand-400 bg-gray-50"><option value="">— Select —</option></select></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Reference Number *</label><input type="text" id="sp-ot-ref" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Sender Name *</label><input type="text" id="sp-ot-sender" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+            <div><label class="text-[11px] font-medium text-gray-500 uppercase">Amount *</label><input type="number" id="sp-ot-amount" step="0.01" min="0" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400"></div>
+          </div>
+        </div>
+
+        <div class="border-t border-dashed"></div>
+
+        <div>
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Beneficiary Name</div>
+          <input type="text" id="sp-beneficiary" placeholder="Name on receipt (optional)" class="w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:border-brand-400">
+        </div>
+
+        <div id="sp-error" class="text-red-600 text-sm bg-red-50 rounded-xl px-4 py-3 hidden"></div>
+      </div>
+
+      <div class="shrink-0 border-t px-5 py-4 bg-gray-50 rounded-b-2xl">
+        <button id="btn-confirm-service-payment" class="w-full py-3.5 rounded-2xl bg-brand-600 text-white text-sm font-bold uppercase tracking-wider shadow cursor-pointer hover:bg-brand-700 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+          Charge &amp; Add to Receipt
+        </button>
       </div>
     </div>
   </div>
@@ -901,7 +1002,7 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
   <div class="absolute inset-0 flex items-start justify-center pt-6 px-4 pb-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[92vh]">
       <div class="px-5 py-4 border-b flex items-center justify-between shrink-0">
-        <h3 class="text-base font-bold">Checkout</h3>
+        <h3 class="text-base font-bold">Print Receipt</h3>
         <button onclick="document.getElementById('checkout-modal').classList.add('hidden')" class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200"><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
@@ -974,7 +1075,7 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
 
       <div class="shrink-0 border-t px-5 py-4 bg-gray-50 rounded-b-2xl">
         <button id="btn-confirm-checkout" class="w-full py-3.5 rounded-2xl bg-brand-600 text-white text-sm font-bold uppercase tracking-wider shadow cursor-pointer hover:bg-brand-700 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed" disabled>
-          Confirm &amp; Charge
+          Finalize &amp; Print
         </button>
       </div>
     </div>
@@ -1071,8 +1172,8 @@ body{font-family:'Inter',sans-serif;margin:0;overflow:hidden;background:#f8fafc}
               Description of Services
             </div>
             <!-- Items header -->
-            <div style="display:grid;grid-template-columns:1fr 64px 64px 70px;gap:4px;background:#1e4620;color:#fff;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:4px 4px 0 0;">
-              <div>Service</div><div style="text-align:center;">Rev. Code</div><div style="text-align:center;">GL Acct</div><div style="text-align:right;">Amount</div>
+            <div style="display:grid;grid-template-columns:1fr 64px 64px 86px 70px;gap:4px;background:#1e4620;color:#fff;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:4px 4px 0 0;">
+              <div>Service</div><div style="text-align:center;">Rev. Code</div><div style="text-align:center;">GL Acct</div><div style="text-align:center;">Payment</div><div style="text-align:right;">Amount</div>
             </div>
             <div id="rct-items" style="border:1px solid #d1e8d2;border-top:none;border-radius:0 0 4px 4px;overflow:hidden;"></div>
           </div>
@@ -1795,8 +1896,7 @@ document.getElementById('cust-search-input').addEventListener('input', function(
         btn.addEventListener('click', function() {
           var c = JSON.parse(this.dataset.json.replace(/&apos;/g,"'"));
           var name = c.customer_name || (((c.first_name||'') + ' ' + (c.last_name||'')).trim()) || '—';
-          selectedPayer = {type: 'customer', id: c.id, name: name, data: c};
-          updatePayerDisplay(); updateCoPayerDisplay();
+          setSelectedPayer({type: 'customer', id: c.id, name: name, data: c});
           document.getElementById('cust-modal').classList.add('hidden');
         });
       });
@@ -1823,8 +1923,7 @@ document.getElementById('btn-save-cust').addEventListener('click', function() {
     if (d.success) {
       var c = d.customer;
       var name = c.customer_name || (((c.first_name||'') + ' ' + (c.last_name||'')).trim()) || '—';
-      selectedPayer = {type:'customer', id:c.id, name:name, data:c};
-      updatePayerDisplay(); updateCoPayerDisplay();
+      setSelectedPayer({type:'customer', id:c.id, name:name, data:c});
       document.getElementById('add-cust-modal').classList.add('hidden');
     } else { alertEl.textContent = d.message || 'Failed.'; alertEl.classList.remove('hidden'); }
   }).catch(function() { alertEl.textContent = 'Error saving.'; alertEl.classList.remove('hidden'); })
@@ -1863,8 +1962,7 @@ document.getElementById('dept-search-input').addEventListener('input', function(
       res.querySelectorAll('.dept-res').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var dept = JSON.parse(this.dataset.json.replace(/&apos;/g,"'"));
-          selectedPayer = {type:'department', id:dept.id, name:dept.name, data:dept};
-          updatePayerDisplay(); updateCoPayerDisplay();
+          setSelectedPayer({type:'department', id:dept.id, name:dept.name, data:dept});
           document.getElementById('dept-modal').classList.add('hidden');
         });
       });
@@ -2208,6 +2306,476 @@ document.getElementById('btn-done-receipt').addEventListener('click', function()
   document.getElementById('receipt-modal').classList.add('hidden');
   selectedPayer = null; updatePayerDisplay();
 });
+
+// ---- Treasury mixed-payment receipt flow ----
+var pendingCharge = null;
+
+function parsePaymentDetails(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw;
+  try { return JSON.parse(raw); } catch (e) { return {}; }
+}
+
+function samePayer(a, b) {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return a.type === b.type && String(a.id || '') === String(b.id || '') && String(a.name || '') === String(b.name || '');
+}
+
+function setSelectedPayer(payer) {
+  if (cartItems.length && !samePayer(selectedPayer, payer)) {
+    alert('This open receipt already has paid items for another payer. Print or clear the current receipt first.');
+    return false;
+  }
+  selectedPayer = payer || null;
+  updatePayerDisplay();
+  updateCoPayerDisplay();
+  return true;
+}
+
+function syncPayerFromItems() {
+  if (!cartItems.length) {
+    selectedPayer = null;
+    updatePayerDisplay();
+    updateCoPayerDisplay();
+    return;
+  }
+  var first = cartItems[0];
+  if (first.customer_id) {
+    selectedPayer = {
+      type: 'customer',
+      id: first.customer_id,
+      name: first.customer_name || 'Customer',
+      data: selectedPayer && selectedPayer.type === 'customer' ? selectedPayer.data : {}
+    };
+  } else if (first.dept_id) {
+    selectedPayer = {
+      type: 'department',
+      id: first.dept_id,
+      name: first.dept_name || 'Department',
+      data: selectedPayer && selectedPayer.type === 'department' ? selectedPayer.data : {}
+    };
+  } else {
+    selectedPayer = null;
+  }
+  updatePayerDisplay();
+  updateCoPayerDisplay();
+}
+
+function loadDraftItems() {
+  return apiPost({action:'load_cart', shift_id:SHIFT_ID}).then(function(d) {
+    cartItems = (d.success && d.items ? d.items : []).map(function(it) {
+      it.amount = parseFloat(it.amount || 0);
+      it.payment_details = parsePaymentDetails(it.payment_details);
+      return it;
+    });
+    syncPayerFromItems();
+    renderCart();
+  });
+}
+
+renderCart = function() {
+  var emptyEl  = document.getElementById('cart-empty');
+  var listEl   = document.getElementById('cart-list');
+  var countEl  = document.getElementById('cart-count');
+  var totalEl  = document.getElementById('cart-total');
+  var checkBtn = document.getElementById('btn-checkout');
+
+  countEl.textContent = cartItems.length + ' item' + (cartItems.length !== 1 ? 's' : '');
+  totalEl.textContent = '$' + cartTotal().toFixed(2);
+  checkBtn.disabled   = cartItems.length === 0;
+
+  if (!cartItems.length) {
+    emptyEl.style.display = '';
+    listEl.style.display  = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  listEl.style.display  = 'block';
+
+  var html = '';
+  for (var i = 0; i < cartItems.length; i++) {
+    var it = cartItems[i];
+    var revTags = '';
+    if (it.fund) revTags += '<span class="inline-flex items-center gap-0.5 text-[9px] bg-blue-50 text-blue-700 border border-blue-100 rounded px-1.5 py-0.5 font-medium"><span class="font-bold">Fund</span> '+escHtml(it.fund)+'</span>';
+    if (it.department_name) revTags += '<span class="inline-flex items-center gap-0.5 text-[9px] bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 font-medium"><span class="font-bold">Dept</span> '+escHtml(it.department_name)+'</span>';
+    if (it.revenue_code) revTags += '<span class="inline-flex items-center gap-0.5 text-[9px] bg-amber-50 text-amber-700 border border-amber-100 rounded px-1.5 py-0.5 font-medium"><span class="font-bold">RC</span> '+escHtml(it.revenue_code)+'</span>';
+    if (it.gl_account) revTags += '<span class="inline-flex items-center gap-0.5 text-[9px] bg-green-50 text-green-700 border border-green-100 rounded px-1.5 py-0.5 font-medium"><span class="font-bold">GL</span> '+escHtml(it.gl_account)+'</span>';
+
+    html += '<div class="bg-white rounded-xl p-3 border border-gray-200">'
+          + '<div class="flex items-start justify-between gap-2">'
+          + '<div class="flex-1 min-w-0">'
+          + '<div class="text-sm font-semibold text-gray-900 truncate">'+escHtml(it.activity_name || '')+'</div>'
+          + (it.activity_code ? '<div class="text-[10px] text-gray-400 font-mono mb-1">'+escHtml(it.activity_code)+'</div>' : '')
+          + '<div class="flex flex-wrap gap-1 mb-1">'
+          + '<span class="inline-flex items-center gap-0.5 text-[9px] bg-slate-100 text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 font-medium"><span class="font-bold">Paid By</span> '+escHtml(fmtMethod(it.payment_method || ''))+'</span>'
+          + '</div>'
+          + (revTags ? '<div class="flex flex-wrap gap-1">'+revTags+'</div>' : '')
+          + '</div>'
+          + '<div class="text-right flex flex-col items-end gap-1 shrink-0">'
+          + '<div class="text-sm font-bold text-gray-900">BZD $'+parseFloat(it.amount || 0).toFixed(2)+'</div>'
+          + '<button class="cart-del-btn text-red-400 hover:text-red-600 cursor-pointer" data-item-id="'+escHtml(String(it.id || ''))+'" title="Remove">'
+          + '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>'
+          + '</button>'
+          + '</div></div></div>';
+  }
+  listEl.innerHTML = html;
+
+  listEl.querySelectorAll('.cart-del-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var itemId = this.dataset.itemId;
+      apiPost({action:'delete_cart_item', item_id:itemId}).then(function() {
+        return loadDraftItems();
+      });
+    });
+  });
+};
+
+function showServicePaymentModal(activity, amount) {
+  pendingCharge = {activity: activity, amount: amount};
+  document.getElementById('sp-item-card').innerHTML =
+    '<div class="flex items-start justify-between gap-2">'
+    + '<div class="flex-1 min-w-0">'
+    + '<div class="text-sm text-gray-800 font-medium">'+escHtml(activity.activity_name || '')+'</div>'
+    + (activity.activity_code ? '<div class="text-[10px] text-gray-400 font-mono">'+escHtml(activity.activity_code)+'</div>' : '')
+    + '</div>'
+    + '<div class="text-sm font-bold shrink-0">BZD $'+parseFloat(amount || 0).toFixed(2)+'</div></div>';
+  document.getElementById('sp-total').textContent = '$' + parseFloat(amount || 0).toFixed(2);
+  document.getElementById('sp-beneficiary').value = (selectedPayer && selectedPayer.type === 'customer') ? (selectedPayer.name || '') : '';
+  document.getElementById('sp-error').classList.add('hidden');
+  document.querySelectorAll('.sp-pay-btn').forEach(function(b) { b.classList.remove('selected'); });
+  selectedPayMethod = '';
+  ['sp-check-number','sp-check-bank','sp-check-holder','sp-bd-ref','sp-bd-amount','sp-ot-ref','sp-ot-sender','sp-ot-amount'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['sp-bd-bank','sp-ot-bank'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  updateServicePayerDisplay();
+  showServicePayDetails('');
+  validateServicePayment();
+  document.getElementById('service-payment-modal').classList.remove('hidden');
+}
+
+addToCart = function(activity, amount) {
+  showServicePaymentModal(activity, amount);
+};
+
+function updateServicePayerDisplay() {
+  var el = document.getElementById('sp-payer-display');
+  if (!selectedPayer) {
+    el.innerHTML = '<span class="text-gray-400 font-normal text-sm">Walk-in / no named payer</span>';
+    return;
+  }
+  el.innerHTML = '<span class="font-semibold text-gray-900">'+escHtml(selectedPayer.name)+'</span>'
+    + ' <span class="text-[10px] bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 font-medium">'+escHtml(selectedPayer.type === 'customer' ? 'Customer' : 'Department')+'</span>';
+}
+
+function hideServicePayDetails() {
+  ['sp-pd-check','sp-pd-bank-deposit','sp-pd-online-transfer'].forEach(function(id) {
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+
+function showServicePayDetails(method) {
+  hideServicePayDetails();
+  var wrap = document.getElementById('sp-pay-details');
+  if (method === 'check') {
+    wrap.classList.remove('hidden');
+    document.getElementById('sp-pd-check').classList.remove('hidden');
+  } else if (method === 'bank_deposit') {
+    wrap.classList.remove('hidden');
+    document.getElementById('sp-pd-bank-deposit').classList.remove('hidden');
+    loadBankAccounts(function(a) { populateBankSelect('sp-bd-bank', a); });
+  } else if (method === 'online_transfer') {
+    wrap.classList.remove('hidden');
+    document.getElementById('sp-pd-online-transfer').classList.remove('hidden');
+    loadBankAccounts(function(a) { populateBankSelect('sp-ot-bank', a); });
+  } else {
+    wrap.classList.add('hidden');
+  }
+}
+
+function collectServicePaymentDetails(method) {
+  if (method === 'check') {
+    return {
+      check_number: document.getElementById('sp-check-number').value.trim(),
+      bank_name: document.getElementById('sp-check-bank').value.trim(),
+      holder: document.getElementById('sp-check-holder').value.trim()
+    };
+  }
+  if (method === 'bank_deposit') {
+    var bdSel = document.getElementById('sp-bd-bank');
+    return {
+      bank_account_id: bdSel.value,
+      bank_name: bdSel.options[bdSel.selectedIndex] ? bdSel.options[bdSel.selectedIndex].dataset.bankName : '',
+      reference: document.getElementById('sp-bd-ref').value.trim(),
+      amount_deposited: parseFloat(document.getElementById('sp-bd-amount').value || '0')
+    };
+  }
+  if (method === 'online_transfer') {
+    var otSel = document.getElementById('sp-ot-bank');
+    return {
+      bank_account_id: otSel.value,
+      bank_name: otSel.options[otSel.selectedIndex] ? otSel.options[otSel.selectedIndex].dataset.bankName : '',
+      reference: document.getElementById('sp-ot-ref').value.trim(),
+      sender_name: document.getElementById('sp-ot-sender').value.trim(),
+      amount_sent: parseFloat(document.getElementById('sp-ot-amount').value || '0')
+    };
+  }
+  return {};
+}
+
+function validateServicePayment() {
+  var ok = !!pendingCharge && !!selectedPayMethod;
+  if (ok && selectedPayMethod === 'check') {
+    ok = !!(document.getElementById('sp-check-number').value.trim() && document.getElementById('sp-check-bank').value.trim());
+  } else if (ok && selectedPayMethod === 'bank_deposit') {
+    ok = !!(document.getElementById('sp-bd-bank').value && document.getElementById('sp-bd-ref').value.trim() && document.getElementById('sp-bd-amount').value);
+  } else if (ok && selectedPayMethod === 'online_transfer') {
+    ok = !!(document.getElementById('sp-ot-bank').value && document.getElementById('sp-ot-ref').value.trim() && document.getElementById('sp-ot-sender').value.trim() && document.getElementById('sp-ot-amount').value);
+  }
+  document.getElementById('btn-confirm-service-payment').disabled = !ok;
+}
+
+function replaceNode(id) {
+  var node = document.getElementById(id);
+  var clone = node.cloneNode(true);
+  node.parentNode.replaceChild(clone, node);
+  return clone;
+}
+
+replaceNode('btn-amt-add').addEventListener('click', function() {
+  var amt = parseFloat(document.getElementById('amt-input').value);
+  if (isNaN(amt) || amt <= 0) { document.getElementById('amt-input').focus(); return; }
+  document.getElementById('amt-modal').classList.add('hidden');
+  if (pendingActivity) { showServicePaymentModal(pendingActivity, amt); pendingActivity = null; }
+});
+
+replaceNode('btn-checkout').addEventListener('click', function() {
+  openCheckout();
+});
+
+replaceNode('btn-confirm-checkout').addEventListener('click', function() {
+  var btn = this;
+  var errEl = document.getElementById('co-error');
+  errEl.classList.add('hidden');
+  if (!cartItems.length) {
+    errEl.textContent = 'Receipt has no paid items.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Finalizing...';
+  var receiptItems = cartItems.slice();
+  var receiptPayer = selectedPayer;
+  apiPost({action:'complete_transaction', shift_id:SHIFT_ID})
+    .then(function(d) {
+      if (!d.success) {
+        errEl.textContent = d.message || 'Failed to finalize receipt.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      document.getElementById('checkout-modal').classList.add('hidden');
+      showReceipt(d, receiptItems, receiptPayer);
+      cartItems = [];
+      selectedPayer = null;
+      updatePayerDisplay();
+      updateCoPayerDisplay();
+      renderCart();
+    })
+    .catch(function(e) {
+      errEl.textContent = 'Network error: ' + e.message;
+      errEl.classList.remove('hidden');
+    })
+    .then(function() {
+      btn.disabled = !cartItems.length;
+      btn.textContent = 'Finalize & Print';
+    });
+});
+
+replaceNode('btn-clear-payer').addEventListener('click', function() {
+  if (cartItems.length) {
+    alert('Remove or print the current receipt before clearing the payer.');
+    return;
+  }
+  selectedPayer = null;
+  updatePayerDisplay();
+  updateCoPayerDisplay();
+});
+
+document.querySelectorAll('.sp-pay-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    selectedPayMethod = this.dataset.method;
+    document.querySelectorAll('.sp-pay-btn').forEach(function(b) { b.classList.remove('selected'); });
+    this.classList.add('selected');
+    showServicePayDetails(selectedPayMethod);
+    validateServicePayment();
+  });
+});
+
+['sp-check-number','sp-check-bank','sp-check-holder','sp-bd-ref','sp-bd-amount','sp-ot-ref','sp-ot-sender','sp-ot-amount'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', validateServicePayment);
+});
+['sp-bd-bank','sp-ot-bank'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', validateServicePayment);
+});
+
+document.getElementById('btn-confirm-service-payment').addEventListener('click', function() {
+  var btn = this;
+  var errEl = document.getElementById('sp-error');
+  errEl.classList.add('hidden');
+  if (!pendingCharge || !selectedPayMethod) {
+    errEl.textContent = 'Please complete the payment details.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  var payDetails = collectServicePaymentDetails(selectedPayMethod);
+  var beneficiary = document.getElementById('sp-beneficiary').value.trim();
+  btn.disabled = true;
+  btn.textContent = 'Charging...';
+  apiPost({
+    action:'add_to_cart',
+    shift_id:SHIFT_ID,
+    activity_id:pendingCharge.activity.id,
+    activity_name:pendingCharge.activity.activity_name,
+    activity_code:pendingCharge.activity.activity_code || '',
+    amount:pendingCharge.amount,
+    payment_method:selectedPayMethod,
+    payment_details:payDetails,
+    beneficiary_name:beneficiary,
+    customer_id:selectedPayer && selectedPayer.type === 'customer' ? selectedPayer.id : null,
+    customer_name:selectedPayer && selectedPayer.type === 'customer' ? selectedPayer.name : null,
+    dept_id:selectedPayer && selectedPayer.type === 'department' ? selectedPayer.id : null,
+    dept_name:selectedPayer && selectedPayer.type === 'department' ? selectedPayer.name : null
+  }).then(function(d) {
+    if (!d.success) {
+      errEl.textContent = d.message || 'Failed to add paid item.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    document.getElementById('service-payment-modal').classList.add('hidden');
+    pendingCharge = null;
+    return loadDraftItems();
+  }).catch(function(e) {
+    errEl.textContent = 'Network error: ' + e.message;
+    errEl.classList.remove('hidden');
+  }).then(function() {
+    btn.disabled = false;
+    btn.textContent = 'Charge & Add to Receipt';
+  });
+});
+
+openCheckout = function() {
+  if (!cartItems.length) return;
+  var itemsHtml = '';
+  for (var i = 0; i < cartItems.length; i++) {
+    var it = cartItems[i];
+    itemsHtml += '<div class="flex items-start justify-between gap-2 pb-2 border-b border-gray-100 last:border-0 last:pb-0">'
+      + '<div class="flex-1 min-w-0">'
+      + '<div class="text-sm text-gray-800 font-medium">'+escHtml(it.activity_name || '')
+      + (it.activity_code ? ' <span class="text-[10px] text-gray-400 font-mono">'+escHtml(it.activity_code)+'</span>' : '')+'</div>'
+      + '<div class="text-[11px] text-gray-500 mt-1">'+escHtml(fmtMethod(it.payment_method || ''))+'</div>'
+      + '</div>'
+      + '<div class="text-sm font-bold shrink-0">BZD $'+parseFloat(it.amount || 0).toFixed(2)+'</div></div>';
+  }
+  document.getElementById('co-items-list').innerHTML = itemsHtml;
+  document.getElementById('co-total').textContent = '$' + cartTotal().toFixed(2);
+  document.getElementById('co-error').classList.add('hidden');
+  updateCoPayerDisplay();
+  document.querySelectorAll('.co-pay-btn').forEach(function(el) {
+    el.closest('div').style.display = 'none';
+  });
+  var detailWrap = document.getElementById('co-pay-details');
+  if (detailWrap) detailWrap.style.display = 'none';
+  var beneficiaryWrap = document.getElementById('co-beneficiary');
+  if (beneficiaryWrap && beneficiaryWrap.parentNode) beneficiaryWrap.parentNode.style.display = 'none';
+  document.getElementById('btn-confirm-checkout').disabled = false;
+  document.getElementById('checkout-modal').classList.remove('hidden');
+};
+
+validateCheckout = function() {
+  document.getElementById('btn-confirm-checkout').disabled = !cartItems.length;
+};
+
+showReceipt = function(tx, items, payer) {
+  var now = new Date();
+  function pad2(n) { return n < 10 ? '0'+n : ''+n; }
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dateStr = pad2(now.getDate()) + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  var h12 = now.getHours() % 12 || 12;
+  var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+  var timeStr = pad2(h12) + ':' + pad2(now.getMinutes()) + ':' + pad2(now.getSeconds()) + ' ' + ampm;
+
+  document.getElementById('rct-number').textContent = tx.transaction_id || '—';
+  document.getElementById('rct-datetime').textContent = dateStr + '  ' + timeStr;
+  document.getElementById('rct-branch').textContent = BRANCH_NAME || '—';
+  document.getElementById('rct-terminal').textContent = TERMINAL_NAME || '—';
+  document.getElementById('rct-cashier').textContent = CASHIER_NAME || '—';
+  document.getElementById('rct-shift').textContent = SHIFT_ID || '—';
+  document.getElementById('rct-verify-ref').textContent = tx.transaction_id || '—';
+  document.getElementById('rct-processed-by').textContent = 'Processed by: ' + CASHIER_NAME + ' · ' + dateStr + ' ' + timeStr;
+
+  var payerHtml = '';
+  function payerField(label, value) {
+    return '<div><div style="font-size:8px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">'
+      + escHtml(label) + '</div><div style="font-weight:600;color:#111827;">' + escHtml(value) + '</div></div>';
+  }
+  if (payer && payer.type === 'customer') {
+    var c = payer.data || {};
+    payerHtml += payerField('Name', payer.name);
+    payerHtml += payerField('Type', c.customer_type ? (c.customer_type.charAt(0).toUpperCase() + c.customer_type.slice(1)) : 'Individual');
+    if (c.tax_id) payerHtml += payerField('TIN / ID #', c.tax_id);
+    if (c.phone) payerHtml += payerField('Phone', c.phone);
+    if (c.email) payerHtml += payerField('Email', c.email);
+  } else if (payer && payer.type === 'department') {
+    var dp = payer.data || {};
+    payerHtml += payerField('Name', payer.name);
+    payerHtml += payerField('Type', 'Government Department');
+    if (dp.code) payerHtml += payerField('Code', dp.code);
+    if (dp.ministry_name) payerHtml += payerField('Ministry', dp.ministry_name);
+  } else {
+    payerHtml += payerField('Name', 'Walk-in / Cash Customer');
+    payerHtml += payerField('Type', 'Individual');
+  }
+  document.getElementById('rct-payer-block').innerHTML = payerHtml;
+
+  var total = parseFloat(tx.total || 0);
+  var itemsHtml = '';
+  var paymentSummary = {};
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    var rowBg = (i % 2 === 0) ? '#fff' : '#f8fdf5';
+    var methodLabel = fmtMethod(it.payment_method || '');
+    paymentSummary[methodLabel] = (paymentSummary[methodLabel] || 0) + parseFloat(it.amount || 0);
+    itemsHtml += '<div style="display:grid;grid-template-columns:1fr 64px 64px 86px 70px;gap:4px;padding:6px 8px;border-bottom:1px solid #e8f3e8;background:' + rowBg + ';">'
+      + '<div style="font-size:10px;color:#111827;">'
+      + '<div style="font-weight:600;">' + escHtml(it.activity_name || '') + '</div>'
+      + (it.activity_code ? '<div style="font-size:8px;font-family:monospace;color:#6b7280;">' + escHtml(it.activity_code) + '</div>' : '')
+      + (it.cost_center_name ? '<div style="font-size:8px;color:#9ca3af;">' + escHtml(it.cost_center_name) + '</div>' : '')
+      + '</div>'
+      + '<div style="font-size:9px;font-family:monospace;color:#1d4ed8;text-align:center;font-weight:700;padding-top:3px;">' + escHtml(it.revenue_code || '—') + '</div>'
+      + '<div style="font-size:9px;font-family:monospace;color:#15803d;text-align:center;font-weight:700;padding-top:3px;">' + escHtml(it.gl_account || '—') + '</div>'
+      + '<div style="font-size:9px;color:#374151;text-align:center;font-weight:700;padding-top:3px;">' + escHtml(methodLabel || '—') + '</div>'
+      + '<div style="font-size:10px;font-weight:700;color:#111827;text-align:right;padding-top:3px;">$' + parseFloat(it.amount || 0).toFixed(2) + '</div>'
+      + '</div>';
+  }
+  if (!itemsHtml) itemsHtml = '<div style="padding:10px 8px;font-size:10px;color:#6b7280;text-align:center;">No items.</div>';
+  document.getElementById('rct-items').innerHTML = itemsHtml;
+  document.getElementById('rct-total').textContent = 'BZD $' + total.toFixed(2);
+  document.getElementById('rct-amount-words').textContent = numberToWords(total);
+
+  var pmHtml = '';
+  Object.keys(paymentSummary).forEach(function(label) {
+    pmHtml += payerField(label, 'BZD $' + paymentSummary[label].toFixed(2));
+  });
+  document.getElementById('rct-payment-block').innerHTML = pmHtml || payerField('Payment', '—');
+  document.getElementById('receipt-modal').classList.remove('hidden');
+};
+
+loadDraftItems();
 
 // ---- Session status helpers ----
 function setSessionStatus(label, color) {

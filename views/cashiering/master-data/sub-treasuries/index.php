@@ -25,7 +25,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             </div>
             <input type="text" id="search-input" class="form-control form-control-sm" style="max-width:200px;" placeholder="Search...">
             <div id="stats-area" class="d-flex gap-2">
-              <span class="badge bg-success-lt">Active: 0</span>
+              <span class="badge bg-success-lt text-success">Active: 0</span>
               <span class="badge bg-secondary-lt">Inactive: 0</span>
             </div>
             <a href="<?= url('views/cashiering/dashboard.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Cashiering</a>
@@ -40,7 +40,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
           <table class="table table-vcenter table-hover card-table">
             <thead>
               <tr>
-                <th data-col="sub_treasury_code">Code</th>
+                <th data-col="sub_treasury_code">Cost Centre Code</th>
                 <th data-col="sub_treasury_name">Name</th>
                 <th data-col="department_name">Department</th>
                 <th data-col="district">District</th>
@@ -79,8 +79,8 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
             <input type="text" class="form-control" id="add-sub_treasury_name" placeholder="Sub-treasury name">
           </div>
           <div class="col-md-6 mb-3">
-            <label class="form-label">Sub-Treasury Code</label>
-            <input type="text" class="form-control" id="add-sub_treasury_code" placeholder="e.g. ST-001">
+            <label class="form-label">Cost Centre Code</label>
+            <input type="text" class="form-control" id="add-sub_treasury_code" placeholder="e.g. 18152">
           </div>
         </div>
         <div class="row">
@@ -166,7 +166,7 @@ async function loadRows(search) {
     var active   = allRows.filter(function(r) { return Number(r.is_active) === 1; }).length;
     var inactive = allRows.filter(function(r) { return Number(r.is_active) === 0; }).length;
     document.getElementById('stats-area').innerHTML =
-      '<span class="badge bg-success-lt">Active: ' + active + '</span>' +
+      '<span class="badge bg-success-lt text-success">Active: ' + active + '</span>' +
       '<span class="badge bg-secondary-lt">Inactive: ' + inactive + '</span>';
   } catch (e) {
     showMsg('table-message', e.message);

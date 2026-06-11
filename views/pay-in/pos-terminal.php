@@ -696,6 +696,24 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden}
   box-shadow:0 0 0 3px rgba(220,38,38,.15) !important;
 }
 
+/* ---- Bolder, higher-contrast modal & panel borders ---- */
+/* Darken the dull green/gray border colors used on cards and modals. */
+[class~="border-[#dbe5d2]"],
+[class~="border-[#e6eee0]"],
+[class~="border-[#eef3ea]"],
+[class~="border-[#d4e3cc]"],
+[class~="border-gray-100"],
+[class~="border-gray-200"] { border-color:#8fae7e !important; }
+/* Thicken the frame on rounded panels, cards, inputs and primary buttons
+   (small pill/chip badges keep their thin 1px border). */
+[class~="border"][class~="rounded-xl"],
+[class~="border"][class~="rounded-2xl"],
+[class~="border"][class~="rounded-[24px]"],
+[class~="border"][class~="rounded-[22px]"],
+[class~="border"][class~="rounded-[20px]"] { border-width:2px !important; }
+/* Give every modal panel a clear frame, even when it had no border class. */
+.fixed.inset-0.z-50 .shadow-2xl { border:2px solid #6f9d5e !important; }
+
 /* ---- Receipt print styles ---- */
 @media print {
   body > *:not(#receipt-print-root) { display:none !important; }
@@ -3196,15 +3214,42 @@ function showReceipt(tx, items, payer, method, payDetails) {
   for (var t = 0; t < items.length; t++) { total += parseFloat(items[t].amount || 0); }
   if (!total && tx && tx.total) total = parseFloat(tx.total || 0);
 
+  // Order items by payment type: collected payments (cash first) before
+  // bank-deposit items, which are grouped at the bottom for a tear-off slip.
+  function methodOrder(m) {
+    var order = {cash:0, check:1, pos_terminal:2, online_transfer:3, e_invoicing:4, bank_deposit:9};
+    return (order[m] != null) ? order[m] : 5;
+  }
+  var orderedItems = items.slice().sort(function(a, b) {
+    return methodOrder(a.payment_method || '') - methodOrder(b.payment_method || '');
+  });
+
   var methodTotals = {};
+  var bankDepositTotal = 0;
   var itemsHtml = '';
-  for (var i = 0; i < items.length; i++) {
-    var it = items[i];
+  var bankSectionStarted = false;
+  for (var i = 0; i < orderedItems.length; i++) {
+    var it = orderedItems[i];
     var pd = parsePaymentDetails(it.payment_details);
     var m  = it.payment_method || '';
     methodTotals[m] = (methodTotals[m] || 0) + parseFloat(it.amount || 0);
+    var isBank = (m === 'bank_deposit');
+    if (isBank) bankDepositTotal += parseFloat(it.amount || 0);
+
+    // Insert the tear-off divider once, right before the first bank-deposit row,
+    // when there were collected (non-bank) items above it.
+    if (isBank && !bankSectionStarted) {
+      bankSectionStarted = true;
+      if (itemsHtml) {
+        itemsHtml += '<div style="border-top:2px dashed #1e4620;background:#f8fdf5;text-align:center;padding:7px 8px 6px;">'
+          + '<span style="display:inline-block;background:#fff;border:1.5px solid #1e4620;border-radius:999px;padding:2px 12px;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1e4620;">&#9986; Bank Deposit &mdash; Tear Off &amp; Present At Bank</span>'
+          + '</div>';
+      }
+    }
+
     var ref = posBankDepositReference(it) || ((m === 'online_transfer' && pd.reference) ? pd.reference : '');
-    var rowBg = (i % 2 === 0) ? '#fff' : '#f8fdf5';
+    var rowBg = isBank ? '#fbfcf8' : ((i % 2 === 0) ? '#fff' : '#f8fdf5');
+    var refSize = isBank ? '8px' : '7px';
     itemsHtml += '<div style="display:grid;grid-template-columns:1.2fr 1fr 86px 70px;gap:4px;padding:6px 8px;border-bottom:1px solid #e8f3e8;background:' + rowBg + ';">'
       + '<div style="font-size:10px;color:#111827;">'
       +   '<div style="font-weight:600;">' + escHtml(it.activity_name || '') + '</div>'
@@ -3214,10 +3259,16 @@ function showReceipt(tx, items, payer, method, payDetails) {
       + '<div style="font-size:9px;color:#374151;padding-top:2px;">' + escHtml(it.beneficiary_name || '—') + '</div>'
       + '<div style="font-size:8px;color:#111827;text-align:center;padding-top:2px;">'
       +   '<div style="font-weight:700;">' + escHtml(fmtMethod(m)) + '</div>'
-      +   (ref ? '<div style="font-size:7px;font-family:monospace;color:#1d4ed8;word-break:break-all;">' + escHtml(ref) + '</div>' : '')
+      +   (ref ? '<div style="font-size:' + refSize + ';font-weight:700;font-family:monospace;color:#1d4ed8;word-break:break-all;">' + escHtml(ref) + '</div>' : '')
       + '</div>'
       + '<div style="font-size:10px;font-weight:700;color:#111827;text-align:right;padding-top:3px;">$' + parseFloat(it.amount || 0).toFixed(2) + '</div>'
       + '</div>';
+  }
+  // If the receipt is bank-deposit only, still label the tear-off section.
+  if (bankSectionStarted && bankDepositTotal === total && total > 0) {
+    itemsHtml = '<div style="background:#f8fdf5;text-align:center;padding:6px 8px;border-bottom:1px solid #e8f3e8;">'
+      + '<span style="display:inline-block;background:#fff;border:1.5px solid #1e4620;border-radius:999px;padding:2px 12px;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1e4620;">&#9986; Bank Deposit &mdash; Present At Bank</span>'
+      + '</div>' + itemsHtml;
   }
   if (!itemsHtml) itemsHtml = '<div style="padding:10px 8px;font-size:10px;color:#6b7280;text-align:center;">No items.</div>';
   document.getElementById('rct-items').innerHTML = itemsHtml;
@@ -3249,7 +3300,7 @@ function showReceipt(tx, items, payer, method, payDetails) {
     number: tx.transaction_id || '',
     dateTime: dateStr + '  ' + timeStr,
     payer: payer,
-    items: items,
+    items: orderedItems,
     total: total,
     methodTotals: methodTotals
   };
@@ -3283,8 +3334,14 @@ function emailReceipt() {
     'ITEMS',
     '-----'
   ];
+  var emailBankStarted = false;
   for (var i = 0; i < d.items.length; i++) {
     var it = d.items[i];
+    if ((it.payment_method || '') === 'bank_deposit' && !emailBankStarted) {
+      emailBankStarted = true;
+      lines.push('- - - - - - - - - - -  TEAR OFF / PRESENT AT BANK  - - - - - - - - - - -');
+      lines.push('');
+    }
     lines.push((i + 1) + '. ' + (it.activity_name || '') + '  —  BZD $' + parseFloat(it.amount || 0).toFixed(2));
     if (it.beneficiary_name) lines.push('   Beneficiary: ' + it.beneficiary_name);
     var dl = posPaymentDetailLines(it);

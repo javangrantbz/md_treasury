@@ -4038,16 +4038,50 @@ showReceipt = function(tx, items, payer) {
   }
   document.getElementById('rct-payer-block').innerHTML = payerHtml;
 
-  var total = parseFloat(tx.total || 0);
+  var hasPendingBankDeposit = receiptHasPendingBankDeposit(items);
+
+  // Totals (sum items; fall back to tx.total).
+  var total = 0;
+  for (var t = 0; t < items.length; t++) { total += parseFloat(items[t].amount || 0); }
+  if (!total && tx && tx.total) total = parseFloat(tx.total || 0);
+
+  // Order by payment type: collected payments (cash first) before bank
+  // deposits, which are grouped at the bottom for a tear-off slip.
+  function methodOrder(m) {
+    var order = {cash:0, check:1, pos_terminal:2, online_transfer:3, e_invoicing:4, bank_deposit:9};
+    return (order[m] != null) ? order[m] : 5;
+  }
+  var orderedItems = items.slice().sort(function(a, b) {
+    return methodOrder(a.payment_method || '') - methodOrder(b.payment_method || '');
+  });
+
+  var methodTotals = {};
+  var bankDepositTotal = 0;
   var itemsHtml = '';
-  for (var i = 0; i < items.length; i++) {
-    var it = items[i];
-    var rowBg = (i % 2 === 0) ? '#fff' : '#f8fdf5';
-    var methodLabel = fmtMethod(it.payment_method || '');
-    var paymentStateHtml = '';
-    if ((it.payment_method || '') === 'bank_deposit') {
-      paymentStateHtml = '<div style="margin-top:3px;font-size:8px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#991b1b;">Pending Payment / Not Paid</div>';
+  var bankSectionStarted = false;
+  for (var i = 0; i < orderedItems.length; i++) {
+    var it = orderedItems[i];
+    var pd = parsePaymentDetails(it.payment_details);
+    var m = it.payment_method || '';
+    methodTotals[m] = (methodTotals[m] || 0) + parseFloat(it.amount || 0);
+    var isBank = (m === 'bank_deposit');
+    if (isBank) bankDepositTotal += parseFloat(it.amount || 0);
+
+    if (isBank && !bankSectionStarted) {
+      bankSectionStarted = true;
+      if (itemsHtml) {
+        itemsHtml += '<div style="border-top:2px dashed #1e4620;background:#f8fdf5;text-align:center;padding:7px 8px 6px;">'
+          + '<span style="display:inline-block;background:#fff;border:1.5px solid #1e4620;border-radius:999px;padding:2px 12px;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1e4620;">&#9986; Bank Deposit &mdash; Tear Off &amp; Present At Bank</span>'
+          + '</div>';
+      }
     }
+
+    var ref = posBankDepositReference(it) || ((m === 'online_transfer' && pd.reference) ? pd.reference : '');
+    var refSize = isBank ? '8px' : '7px';
+    var rowBg = isBank ? '#fbfcf8' : ((i % 2 === 0) ? '#fff' : '#f8fdf5');
+    var paymentStateHtml = isBank
+      ? '<div style="margin-top:2px;font-size:7px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#991b1b;">Pending / Not Paid</div>'
+      : '';
     itemsHtml += '<div style="display:grid;grid-template-columns:1.2fr 1fr 86px 70px;gap:4px;padding:6px 8px;border-bottom:1px solid #e8f3e8;background:' + rowBg + ';">'
       + '<div style="font-size:10px;color:#111827;">'
       + '<div style="font-weight:600;">' + escHtml(it.activity_name || '') + '</div>'
@@ -4055,14 +4089,38 @@ showReceipt = function(tx, items, payer) {
       + (it.cost_center_name ? '<div style="font-size:8px;color:#9ca3af;">' + escHtml(it.cost_center_name) + '</div>' : '')
       + '</div>'
       + '<div style="font-size:9px;color:#374151;padding-top:3px;">' + escHtml(it.beneficiary_name || '--') + '</div>'
-      + '<div style="font-size:9px;color:#374151;text-align:center;font-weight:700;padding-top:3px;">' + escHtml(methodLabel || '--') + paymentStateHtml + '</div>'
+      + '<div style="font-size:8px;color:#111827;text-align:center;padding-top:2px;">'
+      +   '<div style="font-weight:700;">' + escHtml(fmtMethod(m) || '--') + '</div>'
+      +   (ref ? '<div style="font-size:' + refSize + ';font-weight:700;font-family:monospace;color:#1d4ed8;word-break:break-all;">' + escHtml(ref) + '</div>' : '')
+      +   paymentStateHtml
+      + '</div>'
       + '<div style="font-size:10px;font-weight:700;color:#111827;text-align:right;padding-top:3px;">$' + parseFloat(it.amount || 0).toFixed(2) + '</div>'
       + '</div>';
+  }
+  if (bankSectionStarted && bankDepositTotal === total && total > 0) {
+    itemsHtml = '<div style="background:#f8fdf5;text-align:center;padding:6px 8px;border-bottom:1px solid #e8f3e8;">'
+      + '<span style="display:inline-block;background:#fff;border:1.5px solid #1e4620;border-radius:999px;padding:2px 12px;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1e4620;">&#9986; Bank Deposit &mdash; Present At Bank</span>'
+      + '</div>' + itemsHtml;
   }
   if (!itemsHtml) itemsHtml = '<div style="padding:10px 8px;font-size:10px;color:#6b7280;text-align:center;">No items.</div>';
   document.getElementById('rct-items').innerHTML = itemsHtml;
   document.getElementById('rct-total').textContent = 'BZD $' + total.toFixed(2);
   document.getElementById('rct-amount-words').textContent = numberToWords(total);
+
+  // Payment block: method breakdown + bank deposit references.
+  var paymentBlockEl = document.getElementById('rct-payment-block');
+  if (paymentBlockEl) {
+    var pmHtml = '';
+    Object.keys(methodTotals).forEach(function(mk) {
+      pmHtml += payerField(fmtMethod(mk), 'BZD $' + methodTotals[mk].toFixed(2));
+    });
+    for (var r = 0; r < orderedItems.length; r++) {
+      var rRef = posBankDepositReference(orderedItems[r]);
+      if (rRef) pmHtml += payerField('Deposit Reference', rRef);
+    }
+    paymentBlockEl.innerHTML = pmHtml || payerField('Method', '--');
+  }
+
   var statusBanner = document.getElementById('rct-payment-status-banner');
   var statusTitle = document.getElementById('rct-payment-status-title');
   var statusText = document.getElementById('rct-payment-status-text');
@@ -4073,6 +4131,17 @@ showReceipt = function(tx, items, payer) {
     if (statusTitle) statusTitle.textContent = 'Pending Payment / Not Paid';
     if (statusText) statusText.textContent = 'Bank deposit instructions were issued to the customer. Payment has not yet been received by Treasury and remains pending until matched by reference number.';
   }
+
+  // Stash data for email delivery.
+  currentReceiptEmailData = {
+    number: tx.transaction_id || '',
+    dateTime: dateStr + '  ' + timeStr,
+    payer: payer,
+    items: orderedItems,
+    total: total,
+    methodTotals: methodTotals
+  };
+
   document.getElementById('receipt-modal').classList.remove('hidden');
 };
 

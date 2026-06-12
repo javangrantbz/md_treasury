@@ -19,10 +19,10 @@ try {
                    COUNT(DISTINCT dba.id)  AS bank_account_count,
                    COUNT(DISTINCT dcc.id)  AS cost_center_count
             FROM departments d
-            LEFT JOIN branches b                ON b.id   = d.branch_id
-            LEFT JOIN department_bank_accounts dba ON dba.department_id = d.id
-            LEFT JOIN department_cost_centers  dcc ON dcc.department_id = d.id
-            WHERE 1=1";
+            LEFT JOIN branches b                ON b.id   = d.branch_id AND b.deleted_at IS NULL
+            LEFT JOIN department_bank_accounts dba ON dba.department_id = d.id AND dba.deleted_at IS NULL
+            LEFT JOIN department_cost_centers  dcc ON dcc.department_id = d.id AND dcc.deleted_at IS NULL
+            WHERE d.deleted_at IS NULL";
     $params = [];
 
     if ($search !== '') {

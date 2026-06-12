@@ -18,7 +18,7 @@ if ($id <= 0) {
     ], 422);
 }
 
-$stmt = $pdo->prepare("SELECT id FROM transaction_items WHERE id = :id LIMIT 1");
+$stmt = $pdo->prepare("SELECT id FROM transaction_items WHERE id = :id AND deleted_at IS NULL LIMIT 1");
 $stmt->execute(['id' => $id]);
 
 if (!$stmt->fetch()) {
@@ -28,7 +28,7 @@ if (!$stmt->fetch()) {
     ], 404);
 }
 
-$pdo->prepare("DELETE FROM transaction_items WHERE id = :id")->execute(['id' => $id]);
+$pdo->prepare("UPDATE transaction_items SET deleted_at = NOW() WHERE id = :id")->execute(['id' => $id]);
 
 AuditLog::log($pdo, 'delete', 'transaction_item', $id, 'Transaction item #' . $id . ' deleted.');
 apiResponse([

@@ -15,8 +15,8 @@ try {
                    st.district, st.address_line, st.contact_phone, st.contact_email,
                    st.is_active, st.created_at, d.name AS department_name
             FROM sub_treasuries st
-            INNER JOIN departments d ON d.id = st.department_id
-            WHERE 1=1";
+            INNER JOIN departments d ON d.id = st.department_id AND d.deleted_at IS NULL
+            WHERE st.deleted_at IS NULL";
     $params = [];
     if ($search !== '') {
         $sql .= " AND (st.sub_treasury_code LIKE :s1 OR st.sub_treasury_name LIKE :s2 OR d.name LIKE :s3)";

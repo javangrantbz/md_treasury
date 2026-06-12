@@ -13,7 +13,7 @@ try {
     $search = trim((string)($_GET['search'] ?? ''));
     $status = trim((string)($_GET['status'] ?? ''));
 
-    $sql    = "SELECT id, code, name, district, address_line, status, created_at FROM branches WHERE 1=1";
+    $sql    = "SELECT id, code, name, district, address_line, status, created_at FROM branches WHERE deleted_at IS NULL";
     $params = [];
 
     if ($search !== '') {

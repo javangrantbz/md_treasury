@@ -191,11 +191,16 @@ function openDetail(id) {
   document.getElementById('detail-body').innerHTML =
     '<dt class="col-sm-4">Timestamp</dt><dd class="col-sm-8">' + escHtml(r.created_at) + '</dd>' +
     '<dt class="col-sm-4">User</dt><dd class="col-sm-8">' + userName + '</dd>' +
-    '<dt class="col-sm-4">Action</dt><dd class="col-sm-8">' + actionBadge(r.action) + '</dd>' +
+    '<dt class="col-sm-4">Action</dt><dd class="col-sm-8">' + actionBadge(r.event_action || r.action) + '</dd>' +
     '<dt class="col-sm-4">Entity Type</dt><dd class="col-sm-8">' + escHtml(r.entity_type || '—') + '</dd>' +
     '<dt class="col-sm-4">Entity ID</dt><dd class="col-sm-8">' + (r.entity_id != null ? escHtml(String(r.entity_id)) : '—') + '</dd>' +
     '<dt class="col-sm-4">Description</dt><dd class="col-sm-8">' + escHtml(r.description || '—') + '</dd>' +
-    '<dt class="col-sm-4">IP Address</dt><dd class="col-sm-8">' + escHtml(r.ip_address || '—') + '</dd>';
+    '<dt class="col-sm-4">IP Address</dt><dd class="col-sm-8">' + escHtml(r.ip_address || '—') + '</dd>' +
+    '<hr class="my-2">' +
+    '<dt class="col-sm-4">Device</dt><dd class="col-sm-8">' + escHtml(r.ua_device || 'Unknown') + '</dd>' +
+    '<dt class="col-sm-4">OS</dt><dd class="col-sm-8">' + escHtml(r.ua_os || 'Unknown') + '</dd>' +
+    '<dt class="col-sm-4">Browser</dt><dd class="col-sm-8">' + escHtml(r.ua_browser || 'Unknown') + '</dd>' +
+    '<dt class="col-sm-4 text-muted">Raw User Agent</dt><dd class="col-sm-8 text-muted" style="font-size:0.8em; word-break:break-all">' + escHtml(r.user_agent || '—') + '</dd>';
   tabler.Modal.getOrCreateInstance(document.getElementById('modal-detail')).show();
 }
 

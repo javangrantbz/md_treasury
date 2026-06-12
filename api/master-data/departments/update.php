@@ -28,20 +28,20 @@ if ($id <= 0 || $code === '' || $name === '') {
     apiResponse(['success' => false, 'message' => 'Department id, code, and name are required.'], 422);
 }
 
-$exists = $pdo->prepare("SELECT id FROM departments WHERE id = :id LIMIT 1");
+$exists = $pdo->prepare("SELECT id FROM departments WHERE id = :id AND deleted_at IS NULL LIMIT 1");
 $exists->execute(['id' => $id]);
 if (!$exists->fetch()) {
     apiResponse(['success' => false, 'message' => 'Department not found.'], 404);
 }
 
-$check = $pdo->prepare("SELECT id FROM departments WHERE code = :code AND id <> :id LIMIT 1");
+$check = $pdo->prepare("SELECT id FROM departments WHERE code = :code AND id <> :id AND deleted_at IS NULL LIMIT 1");
 $check->execute(['code' => $code, 'id' => $id]);
 if ($check->fetch()) {
     apiResponse(['success' => false, 'message' => 'Another department already uses that code.'], 409);
 }
 
 if ($branchId > 0) {
-    $branchCheck = $pdo->prepare("SELECT id FROM branches WHERE id = :id LIMIT 1");
+    $branchCheck = $pdo->prepare("SELECT id FROM branches WHERE id = :id AND deleted_at IS NULL LIMIT 1");
     $branchCheck->execute(['id' => $branchId]);
     if (!$branchCheck->fetch()) {
         apiResponse(['success' => false, 'message' => 'Selected branch does not exist.'], 422);
@@ -67,8 +67,8 @@ try {
         'updated_by'   => $user['id'] ?? null,
     ]);
 
-    // Sync bank accounts: delete all then re-insert selected
-    $pdo->prepare("DELETE FROM department_bank_accounts WHERE department_id = :id")->execute(['id' => $id]);
+    // Sync bank accounts: soft-delete all then re-insert selected
+    $pdo->prepare("UPDATE department_bank_accounts SET deleted_at = NOW() WHERE department_id = :id AND deleted_at IS NULL")->execute(['id' => $id]);
     if (!empty($bankIds)) {
         $baInsert = $pdo->prepare("
             INSERT IGNORE INTO department_bank_accounts (department_id, bank_account_id, is_default, status, created_by)
@@ -80,7 +80,7 @@ try {
     }
 
     // Sync cost centers via junction table
-    $pdo->prepare("DELETE FROM department_cost_centers WHERE department_id = :id")->execute(['id' => $id]);
+    $pdo->prepare("UPDATE department_cost_centers SET deleted_at = NOW() WHERE department_id = :id AND deleted_at IS NULL")->execute(['id' => $id]);
     if (!empty($ccIds)) {
         $ccInsert = $pdo->prepare("
             INSERT IGNORE INTO department_cost_centers (department_id, cost_center_id)

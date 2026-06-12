@@ -20,7 +20,7 @@ if ($departmentId <= 0 || $costCenterId <= 0) {
 }
 
 $pdo->prepare("
-    DELETE FROM department_cost_centers
+    UPDATE department_cost_centers SET deleted_at = NOW()
     WHERE department_id = :department_id AND cost_center_id = :cost_center_id
 ")->execute(['department_id' => $departmentId, 'cost_center_id' => $costCenterId]);
 

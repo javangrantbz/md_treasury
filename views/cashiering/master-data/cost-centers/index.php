@@ -28,6 +28,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
               <span class="badge bg-success-lt">Active: 0</span>
               <span class="badge bg-secondary-lt">Inactive: 0</span>
             </div>
+            <a href="<?= url('views/cashiering/master-data/cost-centers/audit.php') ?>" class="btn btn-outline-primary btn-sm">Audit Compare</a>
             <a href="<?= url('views/cashiering/dashboard.php') ?>" class="btn btn-outline-secondary btn-sm">&#8592; Cashiering</a>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-add">Add Cost Center</button>
           </div>

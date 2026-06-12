@@ -30,8 +30,8 @@ $sql = "
         t.created_at,
         CONCAT(u.first_name, ' ', u.last_name) AS cashier_name
     FROM transactions t
-    LEFT JOIN users u ON u.id = t.uid
-    WHERE 1=1
+    LEFT JOIN users u ON u.id = t.uid AND u.deleted_at IS NULL
+    WHERE t.deleted_at IS NULL
 ";
 
 $params = [];

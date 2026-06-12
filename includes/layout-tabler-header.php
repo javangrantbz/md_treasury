@@ -11,6 +11,11 @@ $authUser = Auth::user();
     <link rel="stylesheet" href="<?php echo url('assets/css/tabler.css'); ?>">
     <script>const BASE_URL = "<?php echo BASE_URL; ?>";</script>
     <style>
+      /* Slightly darker borders app-wide (cards, tables, panels, inputs, dividers) */
+      :root {
+        --tblr-border-color: #d1d5db;
+        --tblr-border-color-translucent: rgba(128, 150, 172, .32);
+      }
       .modal-header { padding: .6rem 1rem; }
       .modal-footer { padding: .5rem 1rem; }
       .modal-body { padding: .75rem 1rem; }

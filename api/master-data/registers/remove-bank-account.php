@@ -17,14 +17,14 @@ if ($id <= 0) {
     apiResponse(['success' => false, 'message' => 'Invalid assignment id.'], 422);
 }
 
-$exists = $pdo->prepare("SELECT id FROM register_bank_accounts WHERE id = :id LIMIT 1");
+$exists = $pdo->prepare("SELECT id FROM register_bank_accounts WHERE id = :id AND deleted_at IS NULL LIMIT 1");
 $exists->execute(['id' => $id]);
 
 if (!$exists->fetch()) {
     apiResponse(['success' => false, 'message' => 'Assignment not found.'], 404);
 }
 
-$pdo->prepare("DELETE FROM register_bank_accounts WHERE id = :id")->execute(['id' => $id]);
+$pdo->prepare("UPDATE register_bank_accounts SET deleted_at = NOW() WHERE id = :id")->execute(['id' => $id]);
 
 AuditLog::log($pdo, 'remove', 'register', null, 'Bank account assignment #' . $id . ' removed from register.');
 apiResponse([

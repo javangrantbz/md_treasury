@@ -20,7 +20,7 @@ if ($registerId <= 0 || $userId <= 0) {
 }
 
 $pdo->prepare("
-    DELETE FROM register_users WHERE register_id = :register_id AND user_id = :user_id
+    UPDATE register_users SET deleted_at = NOW() WHERE register_id = :register_id AND user_id = :user_id
 ")->execute(['register_id' => $registerId, 'user_id' => $userId]);
 
 AuditLog::log($pdo, 'remove', 'register', $registerId, 'User #' . $userId . ' removed from register #' . $registerId . '.');

@@ -509,6 +509,167 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // ===== DAILY CASH SALES REPORT (current cashier, today) =====
+    if ($action === 'daily_sales_report') {
+        try {
+            $today = date('Y-m-d');
+
+            // All of today's completed CASH items for this cashier.
+            $s = $pdo->prepare("
+                SELECT ci.id, ci.shift_id, ci.activity_name, ci.activity_code,
+                       ci.amount, ci.beneficiary_name, ci.customer_name,
+                       ci.created_at, ci.pay_in_id
+                FROM pos_cart_items ci
+                WHERE ci.uid = :uid
+                  AND ci.payment_method = 'cash'
+                  AND ci.status = 'completed'
+                  AND DATE(ci.created_at) = :today
+                ORDER BY ci.created_at ASC
+            ");
+            $s->execute(['uid' => $userId, 'today' => $today]);
+            $items = $s->fetchAll(PDO::FETCH_ASSOC);
+
+            $totalCash   = 0.0;  // all cash collected today
+            $settledCash = 0.0;  // cash already attached to a pay-in
+            $pendingCash = 0.0;  // cash not yet paid in
+            $pendingCount = 0;
+            foreach ($items as &$it) {
+                $amt = (float)$it['amount'];
+                $totalCash += $amt;
+                if (!empty($it['pay_in_id'])) {
+                    $settledCash += $amt;
+                } else {
+                    $pendingCash += $amt;
+                    $pendingCount++;
+                }
+                $it['amount'] = $amt;
+            }
+            unset($it);
+
+            ob_end_clean();
+            echo json_encode([
+                'success'       => true,
+                'date'          => $today,
+                'items'         => $items,
+                'total_cash'    => round($totalCash, 2),
+                'settled_cash'  => round($settledCash, 2),
+                'pending_cash'  => round($pendingCash, 2),
+                'pending_count' => $pendingCount,
+                'total_count'   => count($items),
+            ]);
+        } catch (Throwable $e) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Failed to load daily sales: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // ===== GENERATE PAY-IN FROM TODAY'S CASH SALES =====
+    if ($action === 'generate_sales_payin') {
+        try {
+            $today = date('Y-m-d');
+
+            // Eligible = today's completed cash items for this cashier not yet paid in.
+            $s = $pdo->prepare("
+                SELECT id, amount
+                FROM pos_cart_items
+                WHERE uid = :uid
+                  AND payment_method = 'cash'
+                  AND status = 'completed'
+                  AND pay_in_id IS NULL
+                  AND DATE(created_at) = :today
+                ORDER BY id ASC
+            ");
+            $s->execute(['uid' => $userId, 'today' => $today]);
+            $eligible = $s->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($eligible)) {
+                ob_end_clean();
+                echo json_encode(['success' => false, 'message' => 'No un-settled cash sales for today. Nothing to pay in.']);
+                exit;
+            }
+
+            $cashTotal = 0.0;
+            $ids = [];
+            foreach ($eligible as $row) {
+                $cashTotal += (float)$row['amount'];
+                $ids[] = (int)$row['id'];
+            }
+            $cashTotal = round($cashTotal, 2);
+
+            // Resolve department context from active shift.
+            $deptId   = null;
+            $deptName = null;
+            $sh = $pdo->prepare("SELECT department_id FROM pos_shifts WHERE uid = :uid AND status = 1 LIMIT 1");
+            $sh->execute(['uid' => $userId]);
+            $shRow = $sh->fetch(PDO::FETCH_ASSOC);
+            if ($shRow && !empty($shRow['department_id'])) {
+                $deptId = (int)$shRow['department_id'];
+                $ds = $pdo->prepare("SELECT name FROM departments WHERE id = :id LIMIT 1");
+                $ds->execute(['id' => $deptId]);
+                $dRow = $ds->fetch(PDO::FETCH_ASSOC);
+                if ($dRow) $deptName = $dRow['name'];
+            }
+
+            $pdo->beginTransaction();
+
+            // Generate sequential pay-in id for the date.
+            $datePrefix = date('Ymd', strtotime($today));
+            $cntStmt = $pdo->prepare("SELECT COUNT(*) FROM pay_ins WHERE pay_in_id LIKE :p");
+            $cntStmt->execute(['p' => 'PI-' . $datePrefix . '-%']);
+            $seq     = (int)$cntStmt->fetchColumn() + 1;
+            $payInId = 'PI-' . $datePrefix . '-' . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
+
+            $note = 'Auto-generated from POS cash sales (' . count($ids) . ' transaction'
+                  . (count($ids) === 1 ? '' : 's') . ') on ' . date('d M Y') . '. '
+                  . 'Denominations to be counted at deposit.';
+
+            $pdo->prepare("
+                INSERT INTO pay_ins
+                    (pay_in_id, department_id, department_name, cashier_uid, pay_in_date,
+                     total_cash, total_cheques, total_amount, notes, bank_slip_path, status)
+                VALUES (:pid,:did,:dn,:uid,:dt,:tc,0,:tot,:notes,NULL,'submitted')
+            ")->execute([
+                'pid'   => $payInId,
+                'did'   => $deptId,
+                'dn'    => $deptName,
+                'uid'   => $userId,
+                'dt'    => $today,
+                'tc'    => $cashTotal,
+                'tot'   => $cashTotal,
+                'notes' => $note,
+            ]);
+
+            // Cash row with no denomination breakdown (counted at deposit).
+            $pdo->prepare("
+                INSERT INTO pay_in_cash
+                    (pay_in_id,d_100,d_50,d_20,d_10,d_5,d_2,d_1,c_50,c_25,c_10,c_5,c_1,cash_total)
+                VALUES (:pid,0,0,0,0,0,0,0,0,0,0,0,0,:ct)
+            ")->execute(['pid' => $payInId, 'ct' => $cashTotal]);
+
+            // Mark the settled items so they aren't paid in twice.
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $upd = $pdo->prepare("UPDATE pos_cart_items SET pay_in_id = ? WHERE id IN ($placeholders)");
+            $upd->execute(array_merge([$payInId], $ids));
+
+            $pdo->commit();
+
+            ob_end_clean();
+            echo json_encode([
+                'success'      => true,
+                'pay_in_id'    => $payInId,
+                'total_cash'   => $cashTotal,
+                'item_count'   => count($ids),
+                'view_url'     => url('views/pay-in/pay-in-view.php') . '?id=' . urlencode($payInId),
+            ]);
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Failed to generate pay-in: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
     // ===== LOAD ACTIVITIES (default) =====
     try {
         $ctx    = pos_get_user_context($pdo, $userId);
@@ -883,6 +1044,7 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
 
     <!-- Right: Action buttons -->
     <div style="display:flex;align-items:center;gap:3px;padding-left:14px;border-left:1px solid rgba(255,255,255,.09);flex-shrink:0;">
+      <button id="btn-day-sales" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(74,222,128,.14);border:1px solid rgba(74,222,128,.3);color:#bbf7d0;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">My Sales</button>
       <button id="btn-totals" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Totals</button>
       <button id="btn-lock" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Lock</button>
       <button id="btn-supervisor" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Supervisor</button>
@@ -1735,6 +1897,92 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
             <input type="email" id="bdi-email-input" class="w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none focus:border-brand-400" placeholder="customer@example.com">
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Cash Sales / Generate Pay-In -->
+<div id="day-sales-modal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('day-sales-modal').classList.add('hidden')"></div>
+  <div class="absolute inset-0 overflow-y-auto flex items-start justify-center px-4 py-6">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto" style="font-family:'Inter',sans-serif;">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50 rounded-t-2xl">
+        <div>
+          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">My Cash Sales &mdash; Today</div>
+          <div class="text-[11px] text-gray-400" id="ds-date-label">—</div>
+        </div>
+        <button onclick="document.getElementById('day-sales-modal').classList.add('hidden')" class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200"><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="grid grid-cols-3 gap-3 px-5 pt-4">
+        <div class="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5">
+          <div class="text-[9px] font-bold uppercase tracking-wide text-emerald-600">Cash Today</div>
+          <div class="text-base font-black text-emerald-800" id="ds-total-cash">BZD $0.00</div>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+          <div class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Already Paid-In</div>
+          <div class="text-base font-black text-gray-700" id="ds-settled-cash">BZD $0.00</div>
+        </div>
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+          <div class="text-[9px] font-bold uppercase tracking-wide text-amber-600">To Pay-In</div>
+          <div class="text-base font-black text-amber-700" id="ds-pending-cash">BZD $0.00</div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="px-5 py-4">
+        <div id="ds-loading" class="py-10 text-center text-sm text-gray-400">Loading…</div>
+        <div id="ds-error" class="hidden py-6 text-center text-sm text-red-500"></div>
+
+        <div id="ds-content" class="hidden">
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-gray-100 text-gray-500 text-[10px] uppercase tracking-wide">
+                  <th class="text-left px-3 py-2 font-bold">Time</th>
+                  <th class="text-left px-3 py-2 font-bold">Service</th>
+                  <th class="text-left px-3 py-2 font-bold">Payer</th>
+                  <th class="text-right px-3 py-2 font-bold">Amount</th>
+                  <th class="text-center px-3 py-2 font-bold">Status</th>
+                </tr>
+              </thead>
+              <tbody id="ds-rows"></tbody>
+            </table>
+          </div>
+          <div id="ds-empty" class="hidden py-8 text-center text-sm text-gray-400">No cash sales recorded today.</div>
+        </div>
+      </div>
+
+      <!-- Footer / action -->
+      <div class="flex items-center justify-between gap-3 px-5 py-3 border-t bg-gray-50 rounded-b-2xl">
+        <div class="text-[11px] text-gray-500" id="ds-footer-note">
+          Generates a pay-in for the cash you have not yet settled today.
+        </div>
+        <button id="btn-generate-payin" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold cursor-pointer hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          Generate Pay-In
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Pay-In Generated Confirmation -->
+<div id="payin-done-modal" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+      <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+      <h3 class="text-base font-bold mb-1">Pay-In Generated</h3>
+      <p class="text-sm text-gray-500 mb-1" id="pd-summary">—</p>
+      <p class="text-xs text-gray-400 mb-4 font-mono" id="pd-payin-id">—</p>
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('payin-done-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm cursor-pointer">Close</button>
+        <a id="pd-view-link" href="#" target="_blank" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold cursor-pointer hover:bg-emerald-700 text-center">View Pay-In</a>
       </div>
     </div>
   </div>
@@ -4924,6 +5172,107 @@ function closeTotals() {
 
 document.getElementById('btn-totals').addEventListener('click', function() {
   openPinModal('totals', 'Enter supervisor PIN to view session totals');
+});
+
+// ---- Daily Cash Sales / Generate Pay-In ----
+var _dsPendingCash = 0;
+
+function dsFmtTime(dt) {
+  if (!dt) return '—';
+  var parts = dt.replace('T',' ').split(' ');
+  var tp = (parts[1] || '00:00').split(':');
+  var h = parseInt(tp[0], 10);
+  var ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return (h < 10 ? '0'+h : h) + ':' + tp[1] + ' ' + ap;
+}
+
+function loadDailySales() {
+  document.getElementById('ds-loading').classList.remove('hidden');
+  document.getElementById('ds-content').classList.add('hidden');
+  document.getElementById('ds-error').classList.add('hidden');
+  var genBtn = document.getElementById('btn-generate-payin');
+  genBtn.disabled = true;
+
+  apiPost({action: 'daily_sales_report'}).then(function(d) {
+    document.getElementById('ds-loading').classList.add('hidden');
+    if (!d.success) {
+      var errEl = document.getElementById('ds-error');
+      errEl.textContent = d.message || 'Failed to load daily sales.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    _dsPendingCash = parseFloat(d.pending_cash) || 0;
+    document.getElementById('ds-date-label').textContent   = d.date || '';
+    document.getElementById('ds-total-cash').textContent   = 'BZD $' + (parseFloat(d.total_cash)||0).toFixed(2);
+    document.getElementById('ds-settled-cash').textContent = 'BZD $' + (parseFloat(d.settled_cash)||0).toFixed(2);
+    document.getElementById('ds-pending-cash').textContent = 'BZD $' + _dsPendingCash.toFixed(2);
+
+    var rows = '';
+    var items = d.items || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var settled = !!it.pay_in_id;
+      var badge = settled
+        ? '<span class="inline-block text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-gray-100 text-gray-500">Paid-In</span>'
+        : '<span class="inline-block text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-amber-100 text-amber-700">Pending</span>';
+      var payer = it.beneficiary_name || it.customer_name || '—';
+      rows += '<tr class="border-t border-gray-100' + (settled ? ' text-gray-400' : '') + '">'
+            + '<td class="px-3 py-2 whitespace-nowrap text-xs">' + dsFmtTime(it.created_at) + '</td>'
+            + '<td class="px-3 py-2 text-xs">' + escHtml(it.activity_name || '—') + '</td>'
+            + '<td class="px-3 py-2 text-xs">' + escHtml(payer) + '</td>'
+            + '<td class="px-3 py-2 text-right text-xs font-semibold">BZD $' + (parseFloat(it.amount)||0).toFixed(2) + '</td>'
+            + '<td class="px-3 py-2 text-center">' + badge + '</td>'
+            + '</tr>';
+    }
+    document.getElementById('ds-rows').innerHTML = rows;
+    document.getElementById('ds-empty').classList.toggle('hidden', items.length > 0);
+    document.getElementById('ds-content').classList.remove('hidden');
+
+    genBtn.disabled = _dsPendingCash <= 0;
+    var noteEl = document.getElementById('ds-footer-note');
+    if (_dsPendingCash <= 0) {
+      noteEl.textContent = 'All of today’s cash sales have already been paid in.';
+    } else {
+      noteEl.textContent = 'Pay-in will total BZD $' + _dsPendingCash.toFixed(2)
+                         + ' across ' + d.pending_count + ' un-settled sale' + (d.pending_count === 1 ? '' : 's') + '.';
+    }
+  }).catch(function() {
+    document.getElementById('ds-loading').classList.add('hidden');
+    var errEl = document.getElementById('ds-error');
+    errEl.textContent = 'Network error loading daily sales.';
+    errEl.classList.remove('hidden');
+  });
+}
+
+document.getElementById('btn-day-sales').addEventListener('click', function() {
+  document.getElementById('day-sales-modal').classList.remove('hidden');
+  loadDailySales();
+});
+
+document.getElementById('btn-generate-payin').addEventListener('click', function() {
+  if (_dsPendingCash <= 0) return;
+  if (!confirm('Generate a pay-in for BZD $' + _dsPendingCash.toFixed(2) + ' of today’s cash sales?')) return;
+  var btn = this; btn.disabled = true; btn.textContent = 'Generating…';
+  apiPost({action: 'generate_sales_payin'}).then(function(d) {
+    btn.textContent = 'Generate Pay-In';
+    if (d.success) {
+      document.getElementById('day-sales-modal').classList.add('hidden');
+      document.getElementById('pd-summary').textContent  = 'BZD $' + parseFloat(d.total_cash).toFixed(2)
+        + ' across ' + d.item_count + ' sale' + (d.item_count === 1 ? '' : 's') + '.';
+      document.getElementById('pd-payin-id').textContent = d.pay_in_id;
+      document.getElementById('pd-view-link').href       = d.view_url;
+      document.getElementById('payin-done-modal').classList.remove('hidden');
+    } else {
+      alert(d.message || 'Failed to generate pay-in.');
+      btn.disabled = false;
+    }
+  }).catch(function() {
+    btn.textContent = 'Generate Pay-In';
+    btn.disabled = false;
+    alert('Network error generating pay-in.');
+  });
 });
 
 // ---- End Shift ----

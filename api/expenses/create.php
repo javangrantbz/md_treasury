@@ -4,39 +4,38 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/Auth.php';
+require_once __DIR__ . '/../../includes/ErrorHandler.php';
+require_once __DIR__ . '/../../includes/Validator.php';
 
 Auth::requireAuth();
 requirePost();
 
-$data = requestData();
-$user = Auth::user();
+try {
+    $data = requestData();
+    $user = Auth::user();
 
-$supplierId = (int)($data['supplier_id'] ?? 0);
-$expenditureTypeId = (int)($data['expenditure_type_id'] ?? 0);
-$departmentId = (int)($data['department_id'] ?? 0);
-$subTreasuryId = (int)($data['sub_treasury_id'] ?? 0);
-$registerId = (int)($data['register_id'] ?? 0);
-$branchId = (int)($data['branch_id'] ?? 0);
-$invoiceNumber = trim((string)($data['invoice_number'] ?? ''));
-$invoiceDate = trim((string)($data['invoice_date'] ?? ''));
-$totalAmount = trim((string)($data['total_amount'] ?? ''));
-$totalGst = trim((string)($data['total_gst'] ?? '0'));
-$currencyCode = strtoupper(trim((string)($data['currency_code'] ?? 'BZD')));
-$status = trim((string)($data['status'] ?? 'draft'));
-$notes = trim((string)($data['notes'] ?? ''));
+    $supplierId        = Validator::toInt($data['supplier_id'] ?? 0);
+$expenditureTypeId = Validator::toInt($data['expenditure_type_id'] ?? 0);
+$departmentId      = Validator::toInt($data['department_id'] ?? 0);
+$subTreasuryId     = Validator::toInt($data['sub_treasury_id'] ?? 0);
+$registerId        = Validator::toInt($data['register_id'] ?? 0);
+$branchId          = Validator::toInt($data['branch_id'] ?? 0);
+$invoiceNumber     = Validator::sanitize($data['invoice_number'] ?? '');
+$invoiceDate       = Validator::sanitize($data['invoice_date'] ?? '');
+$totalAmount       = $data['total_amount'] ?? '';
+$totalGst          = $data['total_gst'] ?? '0';
+$currencyCode      = strtoupper(Validator::sanitize($data['currency_code'] ?? 'BZD'));
+$status            = Validator::sanitize($data['status'] ?? 'draft');
+$notes             = Validator::sanitize($data['notes'] ?? '');
 
-if ($supplierId <= 0 || $expenditureTypeId <= 0 || $departmentId <= 0 || $totalAmount === '') {
+if (!$supplierId || !$expenditureTypeId || !$departmentId || !Validator::isCurrency($totalAmount)) {
     apiResponse([
         'success' => false,
-        'message' => 'Supplier, expenditure type, department, and total amount are required.'
+        'message' => 'Supplier, expenditure type, department, and a valid total amount are required.'
     ], 422);
 }
 
-if (!is_numeric($totalAmount) || (float)$totalAmount < 0) {
-    apiResponse(['success' => false, 'message' => 'Total amount must be a valid non-negative number.'], 422);
-}
-
-if ($totalGst !== '' && (!is_numeric($totalGst) || (float)$totalGst < 0)) {
+if (!Validator::isCurrency($totalGst)) {
     apiResponse(['success' => false, 'message' => 'Total GST must be a valid non-negative number.'], 422);
 }
 
@@ -50,11 +49,8 @@ if (!in_array($status, $allowedStatuses, true)) {
     apiResponse(['success' => false, 'message' => 'Invalid initial status.'], 422);
 }
 
-if ($invoiceDate !== '') {
-    $d = DateTime::createFromFormat('Y-m-d', $invoiceDate);
-    if (!$d || $d->format('Y-m-d') !== $invoiceDate) {
-        apiResponse(['success' => false, 'message' => 'Invoice date must be in YYYY-MM-DD format.'], 422);
-    }
+if ($invoiceDate !== '' && !Validator::isDate($invoiceDate)) {
+    apiResponse(['success' => false, 'message' => 'Invoice date must be in YYYY-MM-DD format.'], 422);
 }
 
 $stmt = $pdo->prepare("SELECT id, is_active FROM suppliers WHERE id = :id LIMIT 1");
@@ -240,10 +236,13 @@ $historyStmt->execute([
     'change_reason' => $status === 'submitted' ? 'Created and submitted.' : 'Created as draft.'
 ]);
 
-AuditLog::log($pdo, 'create', 'expense', $newId, 'Expense ' . $expenseNumber . ' created.');
-apiResponse([
-    'success' => true,
-    'message' => 'Expense entry created successfully.',
-    'id' => $newId,
-    'expense_number' => $expenseNumber
-], 201);
+    AuditLog::log($pdo, 'create', 'expense', $newId, 'Expense ' . $expenseNumber . ' created.');
+    apiResponse([
+        'success' => true,
+        'message' => 'Expense entry created successfully.',
+        'id' => $newId,
+        'expense_number' => $expenseNumber
+    ], 201);
+} catch (Throwable $e) {
+    ErrorHandler::handle($e);
+}

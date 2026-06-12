@@ -20,14 +20,14 @@ if ($id <= 0) {
 }
 
 try {
-    $exists = $pdo->prepare("SELECT id FROM cost_center_bank_accounts WHERE id = :id LIMIT 1");
+    $exists = $pdo->prepare("SELECT id FROM cost_center_bank_accounts WHERE id = :id AND deleted_at IS NULL LIMIT 1");
     $exists->execute(['id' => $id]);
     if (!$exists->fetch()) {
         ob_end_clean();
         apiResponse(['success' => false, 'message' => 'Assignment not found.'], 404);
     }
 
-    $pdo->prepare("DELETE FROM cost_center_bank_accounts WHERE id = :id")->execute(['id' => $id]);
+    $pdo->prepare("UPDATE cost_center_bank_accounts SET deleted_at = NOW() WHERE id = :id")->execute(['id' => $id]);
 
     try { AuditLog::log($pdo, 'remove', 'cost_center', null, 'Bank account assignment #' . $id . ' removed from cost center.'); } catch (Throwable $e) {}
     ob_end_clean();

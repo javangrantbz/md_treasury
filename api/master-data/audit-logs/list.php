@@ -17,8 +17,10 @@ try {
     $dateFrom   = trim((string)($_GET['date_from']   ?? ''));
     $dateTo     = trim((string)($_GET['date_to']     ?? ''));
 
-    $sql = "SELECT al.id, al.event_action, al.event_type, al.entity_type, al.entity_id,
-                   al.details_json, al.ip_address, al.status, al.created_at,
+    $sql = "SELECT al.id, al.event_action AS action, al.event_type, al.entity_type, al.entity_id,
+                   al.description, al.old_values, al.new_values, 
+                   al.ip_address, al.user_agent, al.ua_browser, al.ua_os, al.ua_device,
+                   al.created_at,
                    u.id AS user_id,
                    CONCAT(COALESCE(u.first_name,''), ' ', COALESCE(u.last_name,'')) AS user_name,
                    u.username
@@ -28,7 +30,12 @@ try {
     $params = [];
 
     if ($search !== '') {
-        $sql .= " AND al.details_json LIKE :search";
+        $sql .= " AND (al.description LIKE :search 
+                   OR al.entity_type LIKE :search 
+                   OR al.event_action LIKE :search 
+                   OR al.ua_browser LIKE :search 
+                   OR al.ua_os LIKE :search 
+                   OR al.ua_device LIKE :search)";
         $params['search'] = '%' . $search . '%';
     }
     if ($action !== '') {

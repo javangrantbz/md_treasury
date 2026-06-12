@@ -20,9 +20,9 @@ $stmt = $pdo->prepare("
         d.name AS department_name,
         st.sub_treasury_name
     FROM cost_centers cc
-    LEFT JOIN departments d ON d.id = cc.department_id
-    LEFT JOIN sub_treasuries st ON st.id = cc.sub_treasury_id
-    WHERE cc.id = :id
+    LEFT JOIN departments d ON d.id = cc.department_id AND d.deleted_at IS NULL
+    LEFT JOIN sub_treasuries st ON st.id = cc.sub_treasury_id AND st.deleted_at IS NULL
+    WHERE cc.id = :id AND cc.deleted_at IS NULL
     LIMIT 1
 ");
 $stmt->execute(['id' => $id]);

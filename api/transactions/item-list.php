@@ -33,8 +33,8 @@ $stmt = $pdo->prepare("
         cca.activity_code,
         cca.activity_name
     FROM transaction_items ti
-    LEFT JOIN cost_center_activities cca ON cca.id = ti.cost_center_activity_id
-    WHERE ti.transaction_id = :transaction_id
+    LEFT JOIN cost_center_activities cca ON cca.id = ti.cost_center_activity_id AND cca.deleted_at IS NULL
+    WHERE ti.transaction_id = :transaction_id AND ti.deleted_at IS NULL
     ORDER BY ti.sort_order ASC, ti.id ASC
 ");
 $stmt->execute(['transaction_id' => $transactionId]);

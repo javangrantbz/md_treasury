@@ -22,9 +22,9 @@ try {
                d.name AS department_name,
                st.sub_treasury_name
         FROM registers r
-        INNER JOIN departments d     ON d.id  = r.department_id
-        LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id
-        WHERE r.id = :id
+        INNER JOIN departments d     ON d.id  = r.department_id AND d.deleted_at IS NULL
+        LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id AND st.deleted_at IS NULL
+        WHERE r.id = :id AND r.deleted_at IS NULL
         LIMIT 1
     ");
     $stmt->execute(['id' => $id]);
@@ -39,7 +39,7 @@ try {
         SELECT u.id, u.first_name, u.last_name, u.username
         FROM register_users ru
         JOIN users u ON u.id = ru.user_id
-        WHERE ru.register_id = :id
+        WHERE ru.register_id = :id AND ru.deleted_at IS NULL AND u.deleted_at IS NULL
         ORDER BY u.first_name, u.last_name
     ");
     $uStmt->execute(['id' => $id]);

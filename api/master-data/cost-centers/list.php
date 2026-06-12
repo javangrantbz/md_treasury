@@ -20,10 +20,10 @@ try {
                    d.name AS department_name, st.sub_treasury_name,
                    COUNT(DISTINCT ccba.bank_account_id) AS bank_count
             FROM cost_centers cc
-            LEFT JOIN departments d                  ON d.id  = cc.department_id
-            LEFT JOIN sub_treasuries st              ON st.id = cc.sub_treasury_id
-            LEFT JOIN cost_center_bank_accounts ccba ON ccba.cost_center_id = cc.id
-            WHERE 1=1";
+            LEFT JOIN departments d                  ON d.id  = cc.department_id AND d.deleted_at IS NULL
+            LEFT JOIN sub_treasuries st              ON st.id = cc.sub_treasury_id AND st.deleted_at IS NULL
+            LEFT JOIN cost_center_bank_accounts ccba ON ccba.cost_center_id = cc.id AND ccba.deleted_at IS NULL
+            WHERE cc.deleted_at IS NULL";
     $params = [];
 
     if ($search !== '') {

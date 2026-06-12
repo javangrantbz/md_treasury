@@ -45,7 +45,7 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
 
             <!-- View mode -->
             <dl class="row mb-0" id="view-mode">
-              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Code</dt>
+              <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Cost Centre Code</dt>
               <dd class="col-sm-9 mb-2" id="v-sub_treasury_code">—</dd>
               <dt class="col-sm-3 text-muted fw-normal" style="font-size:.85rem;">Name</dt>
               <dd class="col-sm-9 mb-2" id="v-sub_treasury_name">—</dd>
@@ -71,8 +71,8 @@ require_once __DIR__ . '/../../../../includes/layout-tabler-sidebar.php';
                   <input type="text" class="form-control" id="edit-sub_treasury_name" placeholder="Sub-treasury name">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Sub-Treasury Code</label>
-                  <input type="text" class="form-control" id="edit-sub_treasury_code" placeholder="e.g. ST-001">
+                  <label class="form-label">Cost Centre Code</label>
+                  <input type="text" class="form-control" id="edit-sub_treasury_code" placeholder="e.g. 18152">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Department</label>

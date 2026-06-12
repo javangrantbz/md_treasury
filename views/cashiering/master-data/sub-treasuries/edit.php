@@ -37,7 +37,7 @@ require_once __DIR__ . '/../../../../includes/layout-sidebar.php';
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Sub-treasury Code</label>
+                            <label class="form-label">Cost Centre Code</label>
                             <input class="form-control" type="text" name="sub_treasury_code" id="sub_treasury_code" required>
                         </div>
 

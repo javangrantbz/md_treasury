@@ -14,7 +14,7 @@ try {
 
     if ($noteId <= 0) throw new Exception('Invalid note ID.');
 
-    $stmt = $pdo->prepare("DELETE FROM user_notes WHERE id = :id AND user_id = :user_id");
+    $stmt = $pdo->prepare("UPDATE user_notes SET deleted_at = NOW() WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL");
     $stmt->execute(['id' => $noteId, 'user_id' => $userId]);
 
     if ($stmt->rowCount() === 0) {

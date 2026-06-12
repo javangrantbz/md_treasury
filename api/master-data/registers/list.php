@@ -21,11 +21,11 @@ try {
                GROUP_CONCAT(CONCAT(u.first_name, ' ', u.last_name) ORDER BY u.first_name SEPARATOR ', ') AS assigned_users,
                COUNT(ru.id) AS user_count
         FROM registers r
-        INNER JOIN departments d     ON d.id  = r.department_id
-        LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id
-        LEFT  JOIN register_users ru ON ru.register_id = r.id
-        LEFT  JOIN users u           ON u.id = ru.user_id
-        WHERE 1=1";
+        INNER JOIN departments d     ON d.id  = r.department_id AND d.deleted_at IS NULL
+        LEFT  JOIN sub_treasuries st ON st.id = r.sub_treasury_id AND st.deleted_at IS NULL
+        LEFT  JOIN register_users ru ON ru.register_id = r.id AND ru.deleted_at IS NULL
+        LEFT  JOIN users u           ON u.id = ru.user_id AND u.deleted_at IS NULL
+        WHERE r.deleted_at IS NULL";
 
     $params = [];
     if ($search !== '') {

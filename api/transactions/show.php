@@ -41,12 +41,12 @@ $stmt = $pdo->prepare("
             TRIM(CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')))
         ) AS customer_name
     FROM transactions t
-    LEFT JOIN departments d ON d.id = t.department_id
-    LEFT JOIN sub_treasuries st ON st.id = t.sub_treasury_id
-    LEFT JOIN registers r ON r.id = t.register_id
-    LEFT JOIN cost_centers cc ON cc.id = t.cost_center_id
-    LEFT JOIN customers c ON c.id = t.customer_id
-    WHERE t.id = :id
+    LEFT JOIN departments d ON d.id = t.department_id AND d.deleted_at IS NULL
+    LEFT JOIN sub_treasuries st ON st.id = t.sub_treasury_id AND st.deleted_at IS NULL
+    LEFT JOIN registers r ON r.id = t.register_id AND r.deleted_at IS NULL
+    LEFT JOIN cost_centers cc ON cc.id = t.cost_center_id AND cc.deleted_at IS NULL
+    LEFT JOIN customers c ON c.id = t.customer_id AND c.deleted_at IS NULL
+    WHERE t.id = :id AND t.deleted_at IS NULL
     LIMIT 1
 ");
 $stmt->execute(['id' => $id]);

@@ -34,8 +34,8 @@ $deptStmt = $pdo->prepare("
         b.name AS branch_name,
         b.code AS branch_code
     FROM departments d
-    LEFT JOIN branches b ON b.id = d.branch_id
-    WHERE d.id = :id
+    LEFT JOIN branches b ON b.id = d.branch_id AND b.deleted_at IS NULL
+    WHERE d.id = :id AND d.deleted_at IS NULL
     LIMIT 1
 ");
 $deptStmt->execute(['id' => $id]);
@@ -73,6 +73,8 @@ $bankStmt = $pdo->prepare("
     INNER JOIN bank_accounts ba ON ba.id = dba.bank_account_id
     WHERE dba.department_id = :id
       AND dba.status = 'active'
+      AND dba.deleted_at IS NULL
+      AND ba.deleted_at IS NULL
     ORDER BY ba.bank_name ASC, ba.account_name ASC
 ");
 $bankStmt->execute(['id' => $id]);
@@ -93,8 +95,10 @@ $ccStmt = $pdo->prepare("
         st.sub_treasury_name
     FROM department_cost_centers dcc
     INNER JOIN cost_centers cc ON cc.id = dcc.cost_center_id
-    LEFT JOIN sub_treasuries st ON st.id = cc.sub_treasury_id
+    LEFT JOIN sub_treasuries st ON st.id = cc.sub_treasury_id AND st.deleted_at IS NULL
     WHERE dcc.department_id = :id
+      AND dcc.deleted_at IS NULL
+      AND cc.deleted_at IS NULL
     ORDER BY cc.name ASC
 ");
 $ccStmt->execute(['id' => $id]);

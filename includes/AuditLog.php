@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/UAParser.php';
+
 final class AuditLog
 {
     /**
@@ -34,7 +36,10 @@ final class AuditLog
 
         // Capture environment metadata
         $ip = $_SERVER['REMOTE_ADDR'] ?? null;
-        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255) : null;
+        $uaRaw = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255) : null;
+        
+        // Parse user agent for better visibility
+        $uaParsed = UAParser::parse($uaRaw);
 
         // Mask sensitive data in diffs (e.g., passwords)
         $sensitiveKeys = ['password', 'secret', 'mfa_secret', 'auth_key', 'token'];
@@ -44,10 +49,12 @@ final class AuditLog
         $pdo->prepare(
             "INSERT INTO audit_logs (
                 user_id, event_type, event_action, entity_type, entity_id, 
-                old_values, new_values, description, ip_address, user_agent
+                old_values, new_values, description, ip_address, user_agent,
+                ua_browser, ua_os, ua_device
             ) VALUES (
                 :user_id, :event_type, :event_action, :entity_type, :entity_id, 
-                :old_values, :new_values, :description, :ip_address, :user_agent
+                :old_values, :new_values, :description, :ip_address, :user_agent,
+                :ua_browser, :ua_os, :ua_device
             )"
         )->execute([
             'user_id'      => $userId,
@@ -59,7 +66,10 @@ final class AuditLog
             'new_values'   => $cleanNew ? json_encode($cleanNew) : null,
             'description'  => $description !== '' ? $description : null,
             'ip_address'   => $ip,
-            'user_agent'   => $ua,
+            'user_agent'   => $uaRaw,
+            'ua_browser'   => $uaParsed['browser'],
+            'ua_os'        => $uaParsed['os'],
+            'ua_device'    => $uaParsed['device'],
         ]);
     }
 

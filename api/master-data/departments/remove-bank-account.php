@@ -24,7 +24,7 @@ if ($id <= 0) {
 $exists = $pdo->prepare("
     SELECT id
     FROM department_bank_accounts
-    WHERE id = :id
+    WHERE id = :id AND deleted_at IS NULL
     LIMIT 1
 ");
 $exists->execute(['id' => $id]);
@@ -36,7 +36,7 @@ if (!$exists->fetch()) {
     ], 404);
 }
 
-$stmt = $pdo->prepare("DELETE FROM department_bank_accounts WHERE id = :id");
+$stmt = $pdo->prepare("UPDATE department_bank_accounts SET deleted_at = NOW() WHERE id = :id");
 $stmt->execute(['id' => $id]);
 
 AuditLog::log($pdo, 'remove', 'department', null, 'Bank account assignment #' . $id . ' removed from department.');

@@ -21,9 +21,9 @@ try {
             COALESCE(SUM(t.total_amount), 0) AS total_amount,
             CONCAT(u.first_name, ' ', u.last_name) AS cashier_name
         FROM pos_shifts s
-        LEFT JOIN pos_transactions t ON t.shift_id = s.shift_id AND t.status = 'completed'
-        LEFT JOIN users u ON u.id = s.uid
-        WHERE 1=1
+        LEFT JOIN pos_transactions t ON t.shift_id = s.shift_id AND t.status = 'completed' AND t.deleted_at IS NULL
+        LEFT JOIN users u ON u.id = s.uid AND u.deleted_at IS NULL
+        WHERE s.deleted_at IS NULL
     ";
 
     $params = [];

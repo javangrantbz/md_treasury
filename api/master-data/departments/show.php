@@ -27,8 +27,8 @@ $stmt = $pdo->prepare("
         d.created_at,
         b.name AS branch_name
     FROM departments d
-    LEFT JOIN branches b ON b.id = d.branch_id
-    WHERE d.id = :id
+    LEFT JOIN branches b ON b.id = d.branch_id AND b.deleted_at IS NULL
+    WHERE d.id = :id AND d.deleted_at IS NULL
     LIMIT 1
 ");
 $stmt->execute(['id' => $id]);

@@ -20,7 +20,7 @@ try {
                    bat.name AS account_type_name
             FROM bank_accounts ba
             LEFT JOIN bank_account_types bat ON bat.id = ba.account_type_id
-            WHERE 1=1";
+            WHERE ba.deleted_at IS NULL";
     $params = [];
 
     if ($search !== '') {

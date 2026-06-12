@@ -19,8 +19,8 @@ $stmt = $pdo->prepare("
         st.*,
         d.name AS department_name
     FROM sub_treasuries st
-    INNER JOIN departments d ON d.id = st.department_id
-    WHERE st.id = :id
+    INNER JOIN departments d ON d.id = st.department_id AND d.deleted_at IS NULL
+    WHERE st.id = :id AND st.deleted_at IS NULL
     LIMIT 1
 ");
 $stmt->execute(['id' => $id]);

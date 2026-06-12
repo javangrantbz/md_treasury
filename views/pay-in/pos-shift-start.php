@@ -7,6 +7,110 @@ require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/Auth.php';
 Auth::requireAuth();
 
+function pos_shift_fetch_cost_centers(PDO $pdo, int $departmentId): array
+{
+    if ($departmentId <= 0) {
+        return [];
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT cc.id, cc.code, cc.name
+        FROM department_cost_centers dcc
+        INNER JOIN cost_centers cc ON cc.id = dcc.cost_center_id
+        WHERE dcc.department_id = :department_id
+          AND dcc.deleted_at IS NULL
+          AND cc.deleted_at IS NULL
+          AND cc.status = 'active'
+        ORDER BY cc.name ASC
+    ");
+    $stmt->execute(['department_id' => $departmentId]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($rows)) {
+        return $rows;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT cc.id, cc.code, cc.name
+        FROM cost_centers cc
+        WHERE cc.department_id = :department_id
+          AND cc.deleted_at IS NULL
+          AND cc.status = 'active'
+        ORDER BY cc.name ASC
+    ");
+    $stmt->execute(['department_id' => $departmentId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function pos_shift_fetch_bank_accounts(PDO $pdo, int $departmentId, int $costCenterId): array
+{
+    if ($costCenterId > 0) {
+        $stmt = $pdo->prepare("
+            SELECT
+                ba.id,
+                ba.bank_name,
+                ba.account_name,
+                ba.account_masked,
+                ba.currency_code,
+                'cost_center' AS source_key,
+                'Assigned to this cost center' AS source_label
+            FROM cost_center_bank_accounts ccba
+            INNER JOIN bank_accounts ba ON ba.id = ccba.bank_account_id
+            WHERE ccba.cost_center_id = :cost_center_id
+              AND ccba.deleted_at IS NULL
+              AND ba.deleted_at IS NULL
+              AND ba.status = 'active'
+            ORDER BY ba.bank_name ASC, ba.account_name ASC
+        ");
+        $stmt->execute(['cost_center_id' => $costCenterId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!empty($rows)) {
+            return $rows;
+        }
+    }
+
+    if ($departmentId > 0) {
+        $stmt = $pdo->prepare("
+            SELECT
+                ba.id,
+                ba.bank_name,
+                ba.account_name,
+                ba.account_masked,
+                ba.currency_code,
+                'department' AS source_key,
+                'Fallback from department bank accounts' AS source_label
+            FROM department_bank_accounts dba
+            INNER JOIN bank_accounts ba ON ba.id = dba.bank_account_id
+            WHERE dba.department_id = :department_id
+              AND dba.deleted_at IS NULL
+              AND ba.deleted_at IS NULL
+              AND ba.status = 'active'
+            ORDER BY dba.is_default DESC, ba.bank_name ASC, ba.account_name ASC
+        ");
+        $stmt->execute(['department_id' => $departmentId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!empty($rows)) {
+            return $rows;
+        }
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT
+            ba.id,
+            ba.bank_name,
+            ba.account_name,
+            ba.account_masked,
+            ba.currency_code,
+            'system_fallback' AS source_key,
+            'Fallback from active bank accounts' AS source_label
+        FROM bank_accounts ba
+        WHERE ba.deleted_at IS NULL
+          AND ba.status = 'active'
+        ORDER BY ba.bank_name ASC, ba.account_name ASC
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     $raw  = file_get_contents('php://input');
@@ -55,13 +159,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $department = $stmt->fetch(PDO::FETCH_ASSOC);
             }
 
+            $costCenters = $deptId ? pos_shift_fetch_cost_centers($pdo, $deptId) : [];
+            $defaultCostCenterId = !empty($costCenters) ? (int)$costCenters[0]['id'] : 0;
+            $bankAccounts = pos_shift_fetch_bank_accounts($pdo, $deptId ?: 0, $defaultCostCenterId);
+
             ob_end_clean();
             echo json_encode([
                 'success'          => true,
                 'has_active_shift' => false,
                 'registers'        => $registers,
                 'department'       => $department,
+                'cost_centers'     => $costCenters,
+                'bank_accounts'    => $bankAccounts,
             ]);
+        } catch (Throwable $e) {
+            ob_end_clean();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    if ($action === 'load_bank_options') {
+        $deptId = isset($input['department_id']) ? (int)$input['department_id'] : 0;
+        $costCenterId = isset($input['cost_center_id']) ? (int)$input['cost_center_id'] : 0;
+
+        try {
+            $accounts = pos_shift_fetch_bank_accounts($pdo, $deptId, $costCenterId);
+            ob_end_clean();
+            echo json_encode(['success' => true, 'bank_accounts' => $accounts]);
         } catch (Throwable $e) {
             ob_end_clean();
             http_response_code(500);
@@ -118,8 +244,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $shiftId    = isset($input['shift_id']) && !empty($input['shift_id']) ? $input['shift_id'] : strtoupper(bin2hex(random_bytes(6)));
         $deptId     = isset($input['department_id']) ? (int)$input['department_id'] : null;
         $startCash  = isset($input['cash_balance']) ? (float)$input['cash_balance'] : 0.00;
-        $registerId    = null;
-        $inputRegId    = isset($input['register_id']) ? (int)$input['register_id'] : 0;
+        $registerId  = null;
+        $inputRegId  = isset($input['register_id']) ? (int)$input['register_id'] : 0;
+        $costCenterId = isset($input['cost_center_id']) ? (int)$input['cost_center_id'] : 0;
+        $bankAccountId = isset($input['bank_account_id']) ? (int)$input['bank_account_id'] : 0;
 
         // Validate the selected register belongs to this user; fall back to first assigned
         if ($inputRegId) {
@@ -146,6 +274,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $deptId = (int)$_SESSION['user']['department_id'];
         }
 
+        if ($costCenterId <= 0) {
+            ob_end_clean();
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Select the cashier location cost center before starting the shift.']);
+            exit;
+        }
+
+        if ($bankAccountId <= 0) {
+            ob_end_clean();
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Select the bank account for POS payments before starting the shift.']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT
+                cc.id,
+                cc.department_id,
+                cc.status,
+                EXISTS(
+                    SELECT 1
+                    FROM department_cost_centers dcc
+                    WHERE dcc.department_id = :department_id
+                      AND dcc.cost_center_id = cc.id
+                      AND dcc.deleted_at IS NULL
+                ) AS is_linked_to_department
+            FROM cost_centers cc
+            WHERE cc.id = :cost_center_id
+              AND cc.deleted_at IS NULL
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'department_id' => $deptId,
+            'cost_center_id' => $costCenterId,
+        ]);
+        $costCenter = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$costCenter) {
+            ob_end_clean();
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Selected cost center does not exist.']);
+            exit;
+        }
+        if (($costCenter['status'] ?? '') !== 'active') {
+            ob_end_clean();
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Selected cost center is inactive.']);
+            exit;
+        }
+        $belongsToDepartment = (int)($costCenter['department_id'] ?? 0) === (int)$deptId || (int)($costCenter['is_linked_to_department'] ?? 0) === 1;
+        if (!$belongsToDepartment) {
+            ob_end_clean();
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Selected cost center is not available for this cashier location.']);
+            exit;
+        }
+
+        $validBankIds = array_map(static function(array $row): int {
+            return (int)$row['id'];
+        }, pos_shift_fetch_bank_accounts($pdo, (int)$deptId, $costCenterId));
+        if (!in_array($bankAccountId, $validBankIds, true)) {
+            ob_end_clean();
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => 'Selected bank account is not available for the chosen cost center.']);
+            exit;
+        }
+
         // Check no active shift exists
         $stmt = $pdo->prepare("SELECT id FROM pos_shifts WHERE uid = :uid AND status = 1 LIMIT 1");
         $stmt->execute(['uid' => $userId]);
@@ -157,10 +351,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO pos_shifts (shift_id, uid, department_id, register_id, starting_cash, status)
-                VALUES (:sid, :uid, :did, :rid, :cash, 1)
+                INSERT INTO pos_shifts (shift_id, uid, department_id, register_id, cost_center_id, bank_account_id, starting_cash, status)
+                VALUES (:sid, :uid, :did, :rid, :ccid, :baid, :cash, 1)
             ");
-            $stmt->execute(['sid' => $shiftId, 'uid' => $userId, 'did' => $deptId, 'rid' => $registerId, 'cash' => $startCash]);
+            $stmt->execute([
+                'sid' => $shiftId,
+                'uid' => $userId,
+                'did' => $deptId,
+                'rid' => $registerId,
+                'ccid' => $costCenterId,
+                'baid' => $bankAccountId,
+                'cash' => $startCash,
+            ]);
             ob_end_clean();
             echo json_encode(['success' => true, 'shift_id' => $shiftId]);
         } catch (Throwable $e) {
@@ -235,6 +437,20 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
         <div class="card" style="max-width:480px;">
           <div class="card-body">
             <div class="mb-3">
+              <label class="form-label">Cashier Location Cost Center</label>
+              <select class="form-select" id="cost-center-select">
+                <option value="">-- Select cost center --</option>
+              </select>
+              <div class="form-text">This establishes the cashier location for the shift.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">POS Settlement Bank Account</label>
+              <select class="form-select" id="bank-account-select">
+                <option value="">-- Select bank account --</option>
+              </select>
+              <div class="form-text" id="bank-source-note">Bank accounts will load from the selected cost center.</div>
+            </div>
+            <div class="mb-3">
               <label class="form-label">Starting Cash Float (BZD)</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
@@ -270,6 +486,58 @@ function showAlert(id, msg, type) {
 
 var departmentId = null;
 
+function populateCostCenters(rows) {
+  var sel = document.getElementById('cost-center-select');
+  sel.innerHTML = '<option value="">-- Select cost center --</option>';
+  (rows || []).forEach(function(cc) {
+    var opt = document.createElement('option');
+    opt.value = cc.id;
+    opt.textContent = (cc.code ? cc.code + ' - ' : '') + (cc.name || 'Unnamed Cost Center');
+    sel.appendChild(opt);
+  });
+  sel.disabled = !(rows && rows.length);
+}
+
+function populateBankAccounts(rows) {
+  var sel = document.getElementById('bank-account-select');
+  var note = document.getElementById('bank-source-note');
+  sel.innerHTML = '<option value="">-- Select bank account --</option>';
+  (rows || []).forEach(function(bank) {
+    var opt = document.createElement('option');
+    var label = (bank.bank_name || 'Bank') + ' - ' + (bank.account_name || 'Account');
+    if (bank.account_masked) label += ' (' + bank.account_masked + ')';
+    if (bank.currency_code) label += ' [' + bank.currency_code + ']';
+    opt.value = bank.id;
+    opt.textContent = label;
+    sel.appendChild(opt);
+  });
+  sel.disabled = !(rows && rows.length);
+  note.textContent = (rows && rows.length) ? (rows[0].source_label || 'Bank accounts loaded.') : 'No bank accounts are available for the selected cost center.';
+}
+
+function loadBankOptions() {
+  var costCenterId = parseInt(document.getElementById('cost-center-select').value, 10) || 0;
+  populateBankAccounts([]);
+  if (!departmentId || !costCenterId) return;
+
+  fetch(SELF_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'load_bank_options', department_id: departmentId, cost_center_id: costCenterId})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.success) {
+      showAlert('shift-alert', data.message || 'Failed to load bank accounts.');
+      return;
+    }
+    populateBankAccounts(data.bank_accounts || []);
+  })
+  .catch(function(e) {
+    showAlert('shift-alert', 'Error loading bank accounts: ' + e.message);
+  });
+}
+
 // Load info on init
 fetch(SELF_URL, {
   method: 'POST',
@@ -298,6 +566,16 @@ fetch(SELF_URL, {
     document.getElementById('info-department').textContent = '— Not assigned —';
   }
 
+  var costCenters = data.cost_centers || [];
+  populateCostCenters(costCenters);
+  if (costCenters.length > 0) {
+    document.getElementById('cost-center-select').value = String(costCenters[0].id);
+    populateBankAccounts(data.bank_accounts || []);
+  } else {
+    populateBankAccounts([]);
+    showAlert('page-alert', 'No active cost center is available for this cashier location. Assign at least one cost center before starting a shift.', 'warning');
+  }
+
   var registers = data.registers || [];
   var sel = document.getElementById('register-select');
   sel.innerHTML = '';
@@ -321,6 +599,8 @@ fetch(SELF_URL, {
   showAlert('page-alert', 'Error loading shift data: ' + e.message);
 });
 
+document.getElementById('cost-center-select').addEventListener('change', loadBankOptions);
+
 document.getElementById('btn-start-shift').addEventListener('click', function() {
   var el = document.getElementById('shift-alert');
   el.style.display = 'none';
@@ -331,11 +611,34 @@ document.getElementById('btn-start-shift').addEventListener('click', function() 
 
   var cash  = parseFloat(document.getElementById('starting-cash').value) || 0;
   var regId = parseInt(document.getElementById('register-select').value) || null;
+  var costCenterId = parseInt(document.getElementById('cost-center-select').value) || null;
+  var bankAccountId = parseInt(document.getElementById('bank-account-select').value) || null;
+
+  if (!costCenterId) {
+    showAlert('shift-alert', 'Select the cashier location cost center before starting the shift.');
+    btn.disabled = false;
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Shift';
+    return;
+  }
+
+  if (!bankAccountId) {
+    showAlert('shift-alert', 'Select the bank account for POS payments before starting the shift.');
+    btn.disabled = false;
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Shift';
+    return;
+  }
 
   fetch(SELF_URL, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({action: 'start_shift', department_id: departmentId, register_id: regId, cash_balance: cash})
+    body: JSON.stringify({
+      action: 'start_shift',
+      department_id: departmentId,
+      register_id: regId,
+      cost_center_id: costCenterId,
+      bank_account_id: bankAccountId,
+      cash_balance: cash
+    })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {

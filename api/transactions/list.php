@@ -17,8 +17,9 @@ $sql = "
         d.name AS department_name,
         COALESCE(c.customer_name, CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, ''))) AS customer_name
     FROM transactions t
-    LEFT JOIN departments d ON d.id = t.department_id
-    LEFT JOIN customers c ON c.id = t.customer_id
+    LEFT JOIN departments d ON d.id = t.department_id AND d.deleted_at IS NULL
+    LEFT JOIN customers c ON c.id = t.customer_id AND c.deleted_at IS NULL
+    WHERE t.deleted_at IS NULL
     ORDER BY t.id DESC
 ";
 

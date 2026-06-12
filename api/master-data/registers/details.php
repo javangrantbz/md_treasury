@@ -20,9 +20,9 @@ $regStmt = $pdo->prepare("
         d.name AS department_name,
         st.sub_treasury_name
     FROM registers r
-    INNER JOIN departments d ON d.id = r.department_id
-    INNER JOIN sub_treasuries st ON st.id = r.sub_treasury_id
-    WHERE r.id = :id
+    INNER JOIN departments d ON d.id = r.department_id AND d.deleted_at IS NULL
+    INNER JOIN sub_treasuries st ON st.id = r.sub_treasury_id AND st.deleted_at IS NULL
+    WHERE r.id = :id AND r.deleted_at IS NULL
     LIMIT 1
 ");
 $regStmt->execute(['id' => $id]);
@@ -48,6 +48,8 @@ $bankStmt = $pdo->prepare("
     INNER JOIN bank_accounts ba ON ba.id = rba.bank_account_id
     WHERE rba.register_id = :id
       AND rba.is_active = 1
+      AND rba.deleted_at IS NULL
+      AND ba.deleted_at IS NULL
     ORDER BY ba.bank_name ASC, ba.account_name ASC
 ");
 $bankStmt->execute(['id' => $id]);
@@ -65,7 +67,7 @@ $userStmt = $pdo->prepare("
         register_id,
         status
     FROM users
-    WHERE register_id = :id
+    WHERE register_id = :id AND deleted_at IS NULL
     ORDER BY first_name ASC, last_name ASC
 ");
 $userStmt->execute(['id' => $id]);

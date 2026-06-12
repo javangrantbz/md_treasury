@@ -737,7 +737,7 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
 .svc-card.flash{border-color:#1e4620;background:#f0f7eb;}
 
 /* Two-layer header & utility bar */
-.hdr-main{background:#1e4620;color:#fff;}
+.hdr-main{background:#3f6f33;color:#f7faec;}
 .hdr-util{background:#f1f5f9;border-bottom:1px solid #e2e8f0;color:#475569;}
 .hdr-btn:hover{background:rgba(255,255,255,.15);color:#fff;}
 
@@ -780,72 +780,72 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
 </style>
 
 <!-- ===== HEADER LAYER 1: IDENTITY ===== -->
-<header class="shrink-0" style="background:linear-gradient(135deg,#1a3e1f 0%,#1e4a24 100%);box-shadow:0 1px 0 rgba(255,255,255,.06),0 2px 10px rgba(0,0,0,.35);">
-  <div style="display:flex;align-items:center;height:48px;padding:0 14px;gap:0;">
+<header class="shrink-0" style="background:linear-gradient(135deg,#4b7a3a 0%,#5a8a47 100%);box-shadow:0 1px 0 rgba(255,255,255,.08),0 2px 10px rgba(0,0,0,.18);">
+  <?php if ($appEnv === 'DEVELOPMENT'): ?>
+  <div style="height:24px;background:<?= $envBg ?>;display:flex;align-items:center;padding:0 18px;font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#fff7d6;border-bottom:1px solid rgba(0,0,0,.12);">
+    Developing
+  </div>
+  <?php endif; ?>
+  <div style="display:flex;align-items:center;height:62px;padding:0 18px;gap:0;">
 
     <!-- Back to portal -->
     <a href="<?= url('views/pay-in/index.php') ?>"
-       style="display:flex;align-items:center;gap:3px;padding-right:12px;margin-right:2px;border-right:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.32);text-decoration:none;font-size:10px;font-weight:600;letter-spacing:.04em;flex-shrink:0;transition:color .15s;"
-       onmouseover="this.style.color='rgba(255,255,255,.65)'" onmouseout="this.style.color='rgba(255,255,255,.32)'">
-      <svg style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+       style="display:flex;align-items:center;gap:4px;padding-right:14px;margin-right:2px;border-right:1px solid rgba(255,255,255,.16);color:rgba(247,250,236,.7);text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.05em;flex-shrink:0;transition:color .15s;"
+       onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(247,250,236,.7)'">
+      <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       Portal
     </a>
 
     <!-- Seal + Title -->
-    <div style="display:flex;align-items:center;gap:10px;padding:0 14px;border-right:1px solid rgba(255,255,255,.1);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 16px;border-right:1px solid rgba(255,255,255,.18);flex-shrink:0;">
       <img src="<?= url('assets/img/coat-of-arms.png') ?>" alt="Belize Coat of Arms"
-           style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));">
+           style="width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.24));">
       <div>
-        <div style="font-size:7.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);line-height:1;margin-bottom:2px;">Government of Belize &middot; Ministry of Finance</div>
-        <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1.15;">Treasury Revenue System</div>
+        <div style="font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(247,250,236,.72);line-height:1;margin-bottom:3px;">Government of Belize &middot; Ministry of Finance</div>
+        <div style="font-size:18px;font-weight:900;color:#fdfef8;letter-spacing:-.02em;line-height:1.1;">Treasury Revenue System</div>
       </div>
     </div>
 
-    <!-- Env badge -->
-    <div style="padding:0 14px;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0;">
-      <span style="display:inline-block;background:<?= $envBg ?>;color:#fff;font-size:7.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding:2px 8px;border-radius:99px;"><?= $appEnv ?></span>
-    </div>
-
     <!-- Branch -->
-    <div style="display:flex;align-items:baseline;gap:5px;padding:0 16px;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0;">
-      <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.3);">Branch</span>
-      <span style="font-size:12px;font-weight:700;color:#e8f0e9;"><?= htmlspecialchars($branchName) ?></span>
+    <div style="display:flex;align-items:baseline;gap:6px;padding:0 18px;border-right:1px solid rgba(255,255,255,.16);flex-shrink:0;">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(247,250,236,.7);">Branch</span>
+      <span style="font-size:14px;font-weight:800;color:#f7faec;"><?= htmlspecialchars($branchName) ?></span>
     </div>
 
     <?php if ($terminalName): ?>
     <!-- Terminal -->
-    <div style="display:flex;align-items:baseline;gap:5px;padding:0 16px;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0;">
-      <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.3);">Terminal</span>
-      <span style="font-size:12px;font-weight:700;color:#e8f0e9;"><?= htmlspecialchars($terminalName) ?></span>
+    <div style="display:flex;align-items:baseline;gap:6px;padding:0 18px;border-right:1px solid rgba(255,255,255,.16);flex-shrink:0;">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(247,250,236,.7);">Terminal</span>
+      <span style="font-size:14px;font-weight:800;color:#f7faec;"><?= htmlspecialchars($terminalName) ?></span>
     </div>
     <?php endif; ?>
 
     <!-- Shift # -->
-    <div style="display:flex;align-items:baseline;gap:5px;padding:0 16px;flex-shrink:0;">
-      <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.3);">Shift</span>
-      <span style="font-size:11px;font-weight:700;font-family:monospace;color:rgba(255,255,255,.48);"><?= htmlspecialchars($shiftId) ?></span>
+    <div style="display:flex;align-items:baseline;gap:6px;padding:0 18px;flex-shrink:0;">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(247,250,236,.7);">Shift</span>
+      <span style="font-size:13px;font-weight:800;font-family:monospace;color:#eef6de;"><?= htmlspecialchars($shiftId) ?></span>
     </div>
 
     <div style="flex:1;"></div>
 
     <!-- New Pay-In shortcut -->
     <a href="<?= url('views/pay-in/pay-in-new.php') ?>" target="_blank"
-       style="display:flex;align-items:center;gap:5px;margin-right:10px;padding:5px 11px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.04em;flex-shrink:0;transition:background .15s,color .15s;"
-       onmouseover="this.style.background='rgba(255,255,255,.15)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.75)'">
-      <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+       style="display:flex;align-items:center;gap:6px;margin-right:12px;padding:7px 13px;border-radius:8px;background:rgba(247,250,236,.12);border:1px solid rgba(247,250,236,.24);color:#f7faec;text-decoration:none;font-size:11px;font-weight:800;letter-spacing:.05em;flex-shrink:0;transition:background .15s,color .15s;"
+       onmouseover="this.style.background='rgba(247,250,236,.2)';this.style.color='#ffffff'" onmouseout="this.style.background='rgba(247,250,236,.12)';this.style.color='#f7faec'">
+      <svg style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Pay-In
       <svg style="width:9px;height:9px;opacity:.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
     </a>
 
     <!-- Cashier -->
-    <div style="display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid rgba(255,255,255,.1);flex-shrink:0;">
-      <div style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg style="width:13px;height:13px;color:rgba(255,255,255,.7);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <div style="display:flex;align-items:center;gap:12px;padding-left:16px;border-left:1px solid rgba(255,255,255,.18);flex-shrink:0;">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(247,250,236,.15);border:1.5px solid rgba(247,250,236,.24);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg style="width:15px;height:15px;color:rgba(247,250,236,.86);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
       <div>
-        <div style="font-size:12px;font-weight:700;color:#fff;line-height:1.2;"><?= htmlspecialchars($userName) ?></div>
+        <div style="font-size:13px;font-weight:800;color:#ffffff;line-height:1.2;"><?= htmlspecialchars($userName) ?></div>
         <?php if ($roleName): ?>
-        <div style="font-size:9.5px;color:rgba(255,255,255,.38);line-height:1;"><?= htmlspecialchars($roleName) ?></div>
+        <div style="font-size:10.5px;color:rgba(247,250,236,.72);line-height:1.1;"><?= htmlspecialchars($roleName) ?></div>
         <?php endif; ?>
       </div>
     </div>
@@ -854,29 +854,29 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
 </header>
 
 <!-- ===== HEADER LAYER 2: OPERATIONAL STATUS & CONTROLS ===== -->
-<div class="shrink-0" style="background:#112b14;border-bottom:2px solid rgba(0,0,0,.3);">
-  <div style="display:flex;align-items:center;height:32px;padding:0 18px;">
+<div class="shrink-0" style="background:#355b2a;border-bottom:1px solid rgba(24,44,16,.2);">
+  <div style="display:flex;align-items:center;height:40px;padding:0 20px;">
 
     <!-- Left: Live status -->
     <div style="display:flex;align-items:center;flex:1;overflow:hidden;">
 
       <!-- Session status -->
-      <div style="display:flex;align-items:center;gap:5px;padding-right:14px;border-right:1px solid rgba(255,255,255,.09);flex-shrink:0;">
-        <span id="ss-dot" style="width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 2px rgba(74,222,128,.22);flex-shrink:0;"></span>
-        <span id="ss-label" style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#4ade80;">ACTIVE</span>
+      <div style="display:flex;align-items:center;gap:7px;padding-right:16px;border-right:1px solid rgba(247,250,236,.16);flex-shrink:0;">
+        <span id="ss-dot" style="width:8px;height:8px;border-radius:50%;background:#b7f08e;box-shadow:0 0 0 2px rgba(183,240,142,.22);flex-shrink:0;"></span>
+        <span id="ss-label" style="font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#d9f3b9;">ACTIVE</span>
       </div>
 
       <?php if ($shiftStart): ?>
       <!-- Since -->
-      <div style="display:flex;align-items:baseline;gap:4px;padding:0 14px;border-right:1px solid rgba(255,255,255,.09);flex-shrink:0;">
-        <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.28);">Since</span>
-        <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.48);"><?= date('h:i A', strtotime($shiftStart)) ?></span>
+      <div style="display:flex;align-items:baseline;gap:5px;padding:0 16px;border-right:1px solid rgba(247,250,236,.16);flex-shrink:0;">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(247,250,236,.72);">Since</span>
+        <span style="font-size:12px;font-weight:700;color:#f1f8e7;"><?= date('h:i A', strtotime($shiftStart)) ?></span>
       </div>
       <?php endif; ?>
 
       <!-- Live clock -->
-      <div style="padding-left:14px;">
-        <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.3);font-family:monospace;" id="hdr-sync-time">--:--:--</span>
+      <div style="padding-left:16px;">
+        <span style="font-size:11px;font-weight:700;color:rgba(247,250,236,.78);font-family:monospace;" id="hdr-sync-time">--:--:--</span>
       </div>
 
     </div>

@@ -34,17 +34,10 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
               <div class="text-uppercase fw-semibold text-muted mb-1" style="font-size:.68rem;letter-spacing:.1em;">Government of Belize &middot; Treasury Department</div>
-              <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">Pay-In Portal</div>
+              <div class="fw-bold" style="font-size:1.05rem;line-height:1.2;">POS Reporting</div>
+              <div class="text-muted" style="font-size:.78rem;">POS shift history &amp; pay-in records. Launch the POS terminal or start a pay-in from the <a href="<?= url('views/cashiering/dashboard.php') ?>" style="color:#1e4620;font-weight:600;">Cashiering</a> module.</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-              <a href="<?= url('views/pay-in/pos-terminal.php') ?>" class="btn btn-sm" style="background:#1e4620;color:#fff;border-color:#1e4620;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                Open POS Terminal
-              </a>
-              <a href="<?= url('views/pay-in/pay-in-new.php') ?>" class="btn btn-sm" style="background:#b45309;color:#fff;border-color:#b45309;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New Pay-In
-              </a>
               <button class="btn btn-outline-secondary btn-sm d-print-none" onclick="window.print()">Print / Export</button>
             </div>
           </div>

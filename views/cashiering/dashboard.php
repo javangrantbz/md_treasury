@@ -8,6 +8,27 @@ require_once __DIR__ . '/../../config/database.php';
 $authUser = Auth::user();
 $fullName = Auth::fullName();
 
+// Pre-load pay-ins (last 60 days), split by origin for the reporting tabs.
+$dailyPayIns = [];   // cashier daily sales pay-ins (generated from POS cash sales)
+$deptPayIns  = [];   // department pay-ins (department brought money / deposit slips)
+try {
+    $s = $pdo->prepare("
+        SELECT pi.pay_in_id, pi.department_name, pi.pay_in_date,
+               pi.total_cash, pi.total_cheques, pi.total_amount, pi.status, pi.source,
+               pi.created_at, CONCAT(u.first_name,' ',u.last_name) AS cashier_name
+        FROM pay_ins pi
+        LEFT JOIN users u ON u.id = pi.cashier_uid
+        WHERE pi.deleted_at IS NULL AND pi.pay_in_date >= :df
+        ORDER BY pi.pay_in_date DESC, pi.created_at DESC
+        LIMIT 300
+    ");
+    $s->execute(['df' => date('Y-m-d', strtotime('-60 days'))]);
+    foreach ($s->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if ($row['source'] === 'pos_sales') { $dailyPayIns[] = $row; }
+        else                                { $deptPayIns[]  = $row; }
+    }
+} catch (Throwable $e) { /* non-fatal */ }
+
 require_once __DIR__ . '/../../includes/layout-tabler-header.php';
 require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 ?>
@@ -60,25 +81,84 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 
             </div>
 
+            <!-- Operational actions -->
+            <div class="d-flex gap-2 flex-wrap flex-shrink-0">
+              <a href="<?= url('views/pay-in/pos-terminal.php') ?>" class="btn btn-sm" style="background:#1e4620;color:#fff;border-color:#1e4620;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Open POS Terminal
+              </a>
+              <a href="<?= url('views/pay-in/pay-in-new.php') ?>" class="btn btn-sm" style="background:#b45309;color:#fff;border-color:#b45309;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Pay-In
+              </a>
+            </div>
+
           </div>
         </div>
       </div>
 
-      <!-- Recent POS transactions -->
+      <!-- Reporting card: Transactions / Daily Pay-Ins / Department Pay-Ins -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <div class="d-flex gap-2 align-items-center">
-            <h3 class="card-title me-2">Pay-In Transactions</h3>
-            <input type="text" id="dash-search" class="form-control form-control-sm w-auto" placeholder="Search...">
-            <div id="stats-area" class="d-flex gap-2 ms-2">
-              <span class="badge bg-primary-lt">Total: 0</span>
-              <span class="badge bg-success-lt">Cash: 0</span>
-              <span class="badge bg-azure-lt">Cheque: 0</span>
+
+        <!-- Tab bar -->
+        <div style="border-bottom:1px solid #e5e7eb;">
+          <div style="display:flex;align-items:stretch;flex-wrap:wrap;gap:0;">
+
+            <button id="tab-btn-tx" onclick="switchTab('tx')" class="cash-tab"
+              style="display:flex;align-items:center;gap:6px;padding:11px 18px;font-size:.82rem;font-weight:700;letter-spacing:.02em;border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;color:#9ca3af;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Transactions
+            </button>
+
+            <button id="tab-btn-daily" onclick="switchTab('daily')" class="cash-tab"
+              style="display:flex;align-items:center;gap:6px;padding:11px 18px;font-size:.82rem;font-weight:700;letter-spacing:.02em;border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;color:#9ca3af;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Daily Pay-Ins
+            </button>
+
+            <button id="tab-btn-dept" onclick="switchTab('dept')" class="cash-tab"
+              style="display:flex;align-items:center;gap:6px;padding:11px 18px;font-size:.82rem;font-weight:700;letter-spacing:.02em;border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;color:#9ca3af;white-space:nowrap;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/></svg>
+              Department Pay-Ins
+            </button>
+
+            <!-- Filters — right side -->
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 14px;margin-left:auto;flex-wrap:wrap;">
+              <div class="dropdown" id="payment-filter-wrap">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="payment-filter-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Payment: All</button>
+                <div class="dropdown-menu p-2" style="min-width:190px;">
+                  <?php foreach ([
+                    ['cash','Cash'], ['check','Cheque'], ['pos_terminal','POS / Card'],
+                    ['bank_deposit','Bank Deposit'], ['online_transfer','Online Transfer'], ['e_invoicing','E-Invoice'],
+                  ] as [$pmVal, $pmLbl]): ?>
+                  <label class="dropdown-item d-flex align-items-center gap-2 px-2 py-1 mb-0" style="cursor:pointer;font-size:.85rem;">
+                    <input type="checkbox" class="form-check-input m-0 pay-method-cb" value="<?= $pmVal ?>"><?= $pmLbl ?>
+                  </label>
+                  <?php endforeach; ?>
+                  <div class="dropdown-divider my-1"></div>
+                  <button type="button" class="btn btn-sm btn-link text-decoration-none w-100 text-start px-2 py-1" id="payment-filter-clear">Clear payment filter</button>
+                </div>
+              </div>
+              <input type="text" id="dash-search" class="form-control form-control-sm" style="width:auto;" placeholder="Search...">
+              <label style="font-size:.75rem;color:#9ca3af;white-space:nowrap;">From</label>
+              <input type="date" id="filter-date-from" class="form-control form-control-sm" style="width:auto;">
+              <label style="font-size:.75rem;color:#9ca3af;white-space:nowrap;">To</label>
+              <input type="date" id="filter-date-to" class="form-control form-control-sm" style="width:auto;">
+              <button class="btn btn-sm btn-outline-secondary" id="clear-filters-btn">Clear</button>
             </div>
+
           </div>
         </div>
-        <div class="card-body p-0">
-          <div id="dash-message" class="alert m-3" style="display:none"></div>
+
+        <div id="dash-message" class="alert m-3" style="display:none"></div>
+
+        <!-- Transactions pane -->
+        <div id="pane-tx">
+          <div class="d-flex gap-2 align-items-center px-3 py-2 border-bottom" id="stats-area" style="background:#fafafa;">
+            <span class="badge bg-primary-lt">Total: 0</span>
+            <span class="badge bg-success-lt">Cash: 0</span>
+            <span class="badge bg-azure-lt">Cheque: 0</span>
+          </div>
           <table class="table table-vcenter table-hover card-table">
             <thead>
               <tr>
@@ -97,6 +177,69 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
             </tbody>
           </table>
         </div>
+
+        <!-- Daily Pay-Ins pane (cashier daily sales) -->
+        <div id="pane-daily" style="display:none;">
+          <table class="table table-vcenter table-hover card-table">
+            <thead>
+              <tr>
+                <th style="width:160px;">Pay-In ID</th>
+                <th style="width:110px;">Date</th>
+                <th>Cashier</th>
+                <th class="text-end" style="width:130px;">Cash (BZD)</th>
+                <th class="text-end" style="width:130px;">Total (BZD)</th>
+                <th class="text-center" style="width:100px;">Status</th>
+                <th style="width:60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="daily-tbody">
+              <tr><td colspan="7" class="text-center py-4 text-muted">Loading...</td></tr>
+            </tbody>
+            <tfoot id="daily-footer" style="display:none;">
+              <tr class="fw-bold" style="background:#f0f7eb;">
+                <td colspan="4" class="text-end" style="color:#1e4620;">Grand Total</td>
+                <td class="text-end" id="daily-grand" style="color:#1e4620;">—</td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="px-3 py-2 text-end border-top" style="background:#fafafa;">
+            <a href="<?= url('views/pay-in/pay-in-list.php') ?>" style="font-size:.8rem;color:#1e4620;font-weight:600;">View all pay-ins &rarr;</a>
+          </div>
+        </div>
+
+        <!-- Department Pay-Ins pane -->
+        <div id="pane-dept" style="display:none;">
+          <table class="table table-vcenter table-hover card-table">
+            <thead>
+              <tr>
+                <th style="width:160px;">Pay-In ID</th>
+                <th style="width:110px;">Date</th>
+                <th>Department</th>
+                <th>Received By</th>
+                <th class="text-end" style="width:120px;">Cash (BZD)</th>
+                <th class="text-end" style="width:120px;">Cheques (BZD)</th>
+                <th class="text-end" style="width:130px;">Total (BZD)</th>
+                <th class="text-center" style="width:100px;">Status</th>
+                <th style="width:60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="dept-tbody">
+              <tr><td colspan="9" class="text-center py-4 text-muted">Loading...</td></tr>
+            </tbody>
+            <tfoot id="dept-footer" style="display:none;">
+              <tr class="fw-bold" style="background:#fef3c7;">
+                <td colspan="6" class="text-end" style="color:#92400e;">Grand Total</td>
+                <td class="text-end" id="dept-grand" style="color:#92400e;">—</td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="px-3 py-2 text-end border-top" style="background:#fafafa;">
+            <a href="<?= url('views/pay-in/pay-in-list.php') ?>" style="font-size:.8rem;color:#92400e;font-weight:600;">View all pay-ins &rarr;</a>
+          </div>
+        </div>
+
       </div>
 
       <!-- Footer note -->
@@ -111,6 +254,10 @@ require_once __DIR__ . '/../../includes/layout-tabler-sidebar.php';
 <script>
 const POS_URL = "<?= url('api/cashiering/pos-transactions.php') ?>";
 const TODAY   = new Date().toISOString().substring(0, 10);
+const PAY_IN_VIEW_URL = "<?= url('views/pay-in/pay-in-view.php') ?>";
+const DAILY_PAYINS = <?= json_encode($dailyPayIns, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+const DEPT_PAYINS  = <?= json_encode($deptPayIns,  JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+let activeTab = 'tx';
 
 function fmt(amount) {
   if (amount === null || amount === undefined || amount === '') return '—';
@@ -180,8 +327,20 @@ let sortDir  = 'desc';
 
 function applySearchAndSort() {
   const term = document.getElementById('dash-search').value.trim().toLowerCase();
+  const df   = document.getElementById('filter-date-from').value;
+  const dt   = document.getElementById('filter-date-to').value;
 
   let rows = allRows;
+
+  if (df || dt) {
+    rows = rows.filter(r => {
+      const d = (r.completed_at ?? r.created_at ?? '').substring(0, 10);
+      if (!d) return false;
+      if (df && d < df) return false;
+      if (dt && d > dt) return false;
+      return true;
+    });
+  }
 
   if (term) {
     rows = rows.filter(r => {
@@ -193,6 +352,19 @@ function applySearchAndSort() {
         (r.status        ?? '').toLowerCase().includes(term) ||
         acts.toLowerCase().includes(term) ||
         methods.toLowerCase().includes(term)
+      );
+    });
+  }
+
+  // Payment-type filter (multi-select). Keep rows that include ANY selected method.
+  const selMethods = selectedPayMethods();
+  if (selMethods.length) {
+    rows = rows.filter(r => {
+      const methods = Array.isArray(r.payment_methods) ? r.payment_methods : [];
+      return selMethods.some(sel =>
+        methods.includes(sel) ||
+        (sel === 'check' && methods.includes('cheque')) ||
+        (sel === 'pos_terminal' && (methods.includes('credit_card') || methods.includes('debit_card')))
       );
     });
   }
@@ -224,6 +396,119 @@ function applySearchAndSort() {
     : '<tr><td colspan="8" class="text-center py-4 text-muted">No results.</td></tr>';
 }
 
+// ---- Pay-in tabs (daily / department) ----
+function payInStatusBadge(s) {
+  if (s === 'verified') return '<span class="badge bg-success-lt text-success" style="font-size:.7rem;">Verified</span>';
+  if (s === 'rejected') return '<span class="badge bg-danger-lt text-danger" style="font-size:.7rem;">Rejected</span>';
+  return '<span class="badge bg-yellow-lt text-yellow" style="font-size:.7rem;">Submitted</span>';
+}
+
+function filterPayIns(data) {
+  const term = document.getElementById('dash-search').value.trim().toLowerCase();
+  const df   = document.getElementById('filter-date-from').value;
+  const dt   = document.getElementById('filter-date-to').value;
+  return data.filter(p => {
+    if (df && p.pay_in_date < df) return false;
+    if (dt && p.pay_in_date > dt) return false;
+    if (term) {
+      const hay = (p.pay_in_id + ' ' + (p.department_name || '') + ' ' + (p.cashier_name || '')).toLowerCase();
+      if (!hay.includes(term)) return false;
+    }
+    return true;
+  });
+}
+
+function renderDailyPayIns() {
+  const rows = filterPayIns(DAILY_PAYINS);
+  const tbody = document.getElementById('daily-tbody');
+  const tfoot = document.getElementById('daily-footer');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No daily pay-ins found.</td></tr>';
+    tfoot.style.display = 'none';
+    return;
+  }
+  let grand = 0;
+  tbody.innerHTML = rows.map(p => {
+    grand += parseFloat(p.total_amount || 0);
+    const cashier = (p.cashier_name && p.cashier_name.trim()) ? p.cashier_name.trim() : '—';
+    return '<tr>'
+      + '<td><code class="text-muted" style="font-size:.78rem;">' + p.pay_in_id + '</code></td>'
+      + '<td style="font-size:.84rem;">' + p.pay_in_date + '</td>'
+      + '<td class="fw-medium">' + cashier + '</td>'
+      + '<td class="text-end">' + fmt(p.total_cash) + '</td>'
+      + '<td class="text-end fw-semibold">' + fmt(p.total_amount) + '</td>'
+      + '<td class="text-center">' + payInStatusBadge(p.status) + '</td>'
+      + '<td><a href="' + PAY_IN_VIEW_URL + '?id=' + encodeURIComponent(p.pay_in_id) + '" class="btn btn-xs btn-outline-secondary">View</a></td>'
+      + '</tr>';
+  }).join('');
+  document.getElementById('daily-grand').textContent = 'BZD ' + fmt(grand);
+  tfoot.style.display = 'table-footer-group';
+}
+
+function renderDeptPayIns() {
+  const rows = filterPayIns(DEPT_PAYINS);
+  const tbody = document.getElementById('dept-tbody');
+  const tfoot = document.getElementById('dept-footer');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No department pay-ins found.</td></tr>';
+    tfoot.style.display = 'none';
+    return;
+  }
+  let grand = 0;
+  tbody.innerHTML = rows.map(p => {
+    grand += parseFloat(p.total_amount || 0);
+    const dept    = p.department_name || '<span class="text-muted fst-italic">Walk-in</span>';
+    const cashier = (p.cashier_name && p.cashier_name.trim()) ? p.cashier_name.trim() : '—';
+    return '<tr>'
+      + '<td><code class="text-muted" style="font-size:.78rem;">' + p.pay_in_id + '</code></td>'
+      + '<td style="font-size:.84rem;">' + p.pay_in_date + '</td>'
+      + '<td class="fw-medium">' + dept + '</td>'
+      + '<td style="font-size:.84rem;">' + cashier + '</td>'
+      + '<td class="text-end">' + fmt(p.total_cash) + '</td>'
+      + '<td class="text-end">' + fmt(p.total_cheques) + '</td>'
+      + '<td class="text-end fw-semibold">' + fmt(p.total_amount) + '</td>'
+      + '<td class="text-center">' + payInStatusBadge(p.status) + '</td>'
+      + '<td><a href="' + PAY_IN_VIEW_URL + '?id=' + encodeURIComponent(p.pay_in_id) + '" class="btn btn-xs btn-outline-secondary">View</a></td>'
+      + '</tr>';
+  }).join('');
+  document.getElementById('dept-grand').textContent = 'BZD ' + fmt(grand);
+  tfoot.style.display = 'table-footer-group';
+}
+
+// ---- Tab switching + filter dispatch ----
+const TAB_COLORS = { tx: '#206bc4', daily: '#1e4620', dept: '#92400e' };
+
+function switchTab(tab) {
+  activeTab = tab;
+  ['tx', 'daily', 'dept'].forEach(t => {
+    document.getElementById('pane-' + t).style.display = (t === tab) ? '' : 'none';
+    const btn = document.getElementById('tab-btn-' + t);
+    const on  = (t === tab);
+    btn.style.color = on ? TAB_COLORS[t] : '#9ca3af';
+    btn.style.borderBottomColor = on ? TAB_COLORS[t] : 'transparent';
+  });
+  // Payment-type filter only applies to the Transactions tab.
+  const pf = document.getElementById('payment-filter-wrap');
+  if (pf) pf.style.display = (tab === 'tx') ? '' : 'none';
+  applyFilters();
+}
+
+function selectedPayMethods() {
+  return Array.prototype.slice.call(document.querySelectorAll('.pay-method-cb:checked')).map(cb => cb.value);
+}
+
+function updatePayLabel() {
+  const n = selectedPayMethods().length;
+  const btn = document.getElementById('payment-filter-btn');
+  if (btn) btn.textContent = n ? ('Payment: ' + n + ' selected') : 'Payment: All';
+}
+
+function applyFilters() {
+  if (activeTab === 'tx')        applySearchAndSort();
+  else if (activeTab === 'daily') renderDailyPayIns();
+  else                            renderDeptPayIns();
+}
+
 function updateSortIcons() {
   document.querySelectorAll('th.sortable').forEach(th => {
     const icon = th.querySelector('.sort-icon');
@@ -251,12 +536,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Search
+  // Search + date filters apply to the active tab
   let searchTimer;
   document.getElementById('dash-search').addEventListener('input', function () {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(applySearchAndSort, 250);
+    searchTimer = setTimeout(applyFilters, 250);
   });
+  document.getElementById('filter-date-from').addEventListener('change', applyFilters);
+  document.getElementById('filter-date-to').addEventListener('change', applyFilters);
+  document.getElementById('clear-filters-btn').addEventListener('click', function () {
+    document.getElementById('dash-search').value     = '';
+    document.getElementById('filter-date-from').value = '';
+    document.getElementById('filter-date-to').value   = '';
+    document.querySelectorAll('.pay-method-cb').forEach(cb => { cb.checked = false; });
+    updatePayLabel();
+    applyFilters();
+  });
+
+  // Payment-type multi-select
+  document.querySelectorAll('.pay-method-cb').forEach(cb => {
+    cb.addEventListener('change', function () { updatePayLabel(); applyFilters(); });
+  });
+  const payClear = document.getElementById('payment-filter-clear');
+  if (payClear) payClear.addEventListener('click', function () {
+    document.querySelectorAll('.pay-method-cb').forEach(cb => { cb.checked = false; });
+    updatePayLabel();
+    applyFilters();
+  });
+
+  // Render the pay-in tabs immediately (preloaded server-side)
+  renderDailyPayIns();
+  renderDeptPayIns();
 
   try {
     const res  = await apiGet(POS_URL);
@@ -276,11 +586,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (allRows.length === 0) {
       document.getElementById('dash-tbody').innerHTML =
         '<tr><td colspan="8" class="text-center py-4 text-muted">No transactions found.</td></tr>';
-      return;
+    } else {
+      updateSortIcons();
+      applySearchAndSort();
     }
-
-    updateSortIcons();
-    applySearchAndSort();
 
   } catch (e) {
     const el = document.getElementById('dash-message');
@@ -293,6 +602,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById(id).textContent = 'Err';
     });
   }
+
+  // Activate default tab
+  switchTab('tx');
 });
 </script>
 

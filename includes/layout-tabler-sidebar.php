@@ -7,6 +7,10 @@ if (!isset($_pageModuleSections) && strpos($currentUri, '/views/nsb/') !== false
         'title'    => 'NSB Operations',
         'subtitle' => 'National Savings Bank',
         'sections' => [
+            'Savings Accounts' => [
+                ['All Accounts',          'views/nsb/accounts/list.php'],
+                ['Add / Import Accounts', 'views/nsb/accounts/add.php'],
+            ],
             'Applications' => [
                 ['New Applications',      'views/nsb/applications/new.php'],
                 ['Approved Applications', 'views/nsb/applications/approved.php'],
@@ -137,8 +141,11 @@ $iconNsb      = '<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24"
             <ul class="navbar-nav pt-lg-2">
                 <?php echo tablerNavLink(url('views/portal/index.php'), 'Portal', $iconPortal, $currentUri); ?>
                 <?php echo tablerNavLink(url('views/cashiering/dashboard.php'), 'Cashiering', $iconDashboard, $currentUri); ?>
-                <?php echo tablerNavLink(url('views/pay-in/index.php'), 'Pay-In/POS Reporting', $iconPayIn, $currentUri); ?>
+                <?php echo tablerNavLink(url('views/pay-in/index.php'), 'POS Reporting', $iconPayIn, $currentUri); ?>
+                <?php /* NSB module is gated behind a feature flag — its schema is not yet provisioned on all environments. Set NSB_ENABLED=true in config/env.php to show it. */ ?>
+                <?php if (defined('NSB_ENABLED') && NSB_ENABLED): ?>
                 <?php echo tablerNavLink(url('views/nsb/dashboard.php'), 'National Savings Bank', $iconNsb, $currentUri); ?>
+                <?php endif; ?>
             </ul>
             <div class="mt-auto pt-3 border-top">
                 <ul class="navbar-nav">

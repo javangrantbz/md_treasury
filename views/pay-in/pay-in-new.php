@@ -123,8 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("
                 INSERT INTO pay_ins
                     (pay_in_id, department_id, department_name, cashier_uid, pay_in_date,
-                     total_cash, total_cheques, total_amount, notes, bank_slip_path, status)
-                VALUES (:pid,:did,:dn,:uid,:dt,:tc,:tch,:tot,:notes,:slip,'submitted')
+                     total_cash, total_cheques, total_amount, notes, bank_slip_path, status, source)
+                VALUES (:pid,:did,:dn,:uid,:dt,:tc,:tch,:tot,:notes,:slip,'submitted','department')
             ")->execute([
                 'pid'  => $payInId,
                 'did'  => ($deptId > 0) ? $deptId : null,

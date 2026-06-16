@@ -523,6 +523,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE ci.uid = :uid
                   AND ci.payment_method = 'cash'
                   AND ci.status = 'completed'
+                  AND ci.deleted_at IS NULL
                   AND DATE(ci.created_at) = :today
                 ORDER BY ci.created_at ASC
             ");
@@ -577,6 +578,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   AND payment_method = 'cash'
                   AND status = 'completed'
                   AND pay_in_id IS NULL
+                  AND deleted_at IS NULL
                   AND DATE(created_at) = :today
                 ORDER BY id ASC
             ");
@@ -627,8 +629,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("
                 INSERT INTO pay_ins
                     (pay_in_id, department_id, department_name, cashier_uid, pay_in_date,
-                     total_cash, total_cheques, total_amount, notes, bank_slip_path, status)
-                VALUES (:pid,:did,:dn,:uid,:dt,:tc,0,:tot,:notes,NULL,'submitted')
+                     total_cash, total_cheques, total_amount, notes, bank_slip_path, status, source)
+                VALUES (:pid,:did,:dn,:uid,:dt,:tc,0,:tot,:notes,NULL,'submitted','pos_sales')
             ")->execute([
                 'pid'   => $payInId,
                 'did'   => $deptId,
@@ -666,6 +668,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($pdo->inTransaction()) $pdo->rollBack();
             ob_end_clean();
             echo json_encode(['success' => false, 'message' => 'Failed to generate pay-in: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // ===== RECENT TRANSACTIONS (current cashier, today, all methods) =====
+    if ($action === 'recent_transactions') {
+        try {
+            $today = date('Y-m-d');
+            $s = $pdo->prepare("
+                SELECT uuid, total_amount, items, customer_name, dept_name, status, created_at
+                FROM pos_transactions
+                WHERE uid = :uid AND DATE(created_at) = :today
+                ORDER BY created_at DESC
+                LIMIT 100
+            ");
+            $s->execute(['uid' => $userId, 'today' => $today]);
+            $rows = $s->fetchAll(PDO::FETCH_ASSOC);
+
+            $out = [];
+            $grand = 0.0;
+            foreach ($rows as $r) {
+                $items = [];
+                if (!empty($r['items'])) {
+                    $d = json_decode($r['items'], true);
+                    if (is_array($d)) $items = $d;
+                }
+                $methods = [];
+                foreach ($items as $it) {
+                    $m = isset($it['payment_method']) ? $it['payment_method'] : '';
+                    if ($m !== '' && !in_array($m, $methods, true)) $methods[] = $m;
+                }
+                $grand += (float)$r['total_amount'];
+                $out[] = [
+                    'uuid'          => $r['uuid'],
+                    'total_amount'  => (float)$r['total_amount'],
+                    'customer_name' => $r['customer_name'],
+                    'dept_name'     => $r['dept_name'],
+                    'status'        => $r['status'],
+                    'created_at'    => $r['created_at'],
+                    'item_count'    => count($items),
+                    'methods'       => $methods,
+                ];
+            }
+
+            ob_end_clean();
+            echo json_encode([
+                'success'      => true,
+                'date'         => $today,
+                'transactions' => $out,
+                'count'        => count($out),
+                'grand_total'  => round($grand, 2),
+            ]);
+        } catch (Throwable $e) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Failed to load recent transactions: ' . $e->getMessage()]);
         }
         exit;
     }
@@ -733,6 +790,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ===== GET: Render page =====
+// Never let the browser/proxy serve a stale POS terminal (inline JS lives in
+// this page, so a cached copy = old behaviour).
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 // Check for active shift — redirect to shift-start if none
 $stmt = $pdo->prepare("SELECT * FROM pos_shifts WHERE uid = :uid AND status = 1 LIMIT 1");
 $stmt->execute(['uid' => $userId]);
@@ -949,12 +1012,12 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
   <?php endif; ?>
   <div style="display:flex;align-items:center;height:62px;padding:0 18px;gap:0;">
 
-    <!-- Back to portal -->
-    <a href="<?= url('views/pay-in/index.php') ?>"
+    <!-- Back to Cashiering -->
+    <a href="<?= url('views/cashiering/dashboard.php') ?>"
        style="display:flex;align-items:center;gap:4px;padding-right:14px;margin-right:2px;border-right:1px solid rgba(255,255,255,.16);color:rgba(247,250,236,.7);text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.05em;flex-shrink:0;transition:color .15s;"
        onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(247,250,236,.7)'">
       <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      Portal
+      Cashiering
     </a>
 
     <!-- Seal + Title -->
@@ -1044,12 +1107,13 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
 
     <!-- Right: Action buttons -->
     <div style="display:flex;align-items:center;gap:3px;padding-left:14px;border-left:1px solid rgba(255,255,255,.09);flex-shrink:0;">
-      <button id="btn-day-sales" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(74,222,128,.14);border:1px solid rgba(74,222,128,.3);color:#bbf7d0;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">My Sales</button>
-      <button id="btn-totals" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Totals</button>
+      <button type="button" id="btn-recent-tx" onclick="headerOpenRecentTransactions()" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Recent</button>
+      <button type="button" id="btn-day-sales" onclick="headerOpenDaySales()" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(74,222,128,.14);border:1px solid rgba(74,222,128,.3);color:#bbf7d0;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">My Sales</button>
+      <button type="button" id="btn-totals" onclick="headerOpenTotals()" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Totals</button>
       <button id="btn-lock" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Lock</button>
       <button id="btn-supervisor" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:rgba(255,255,255,.55);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">Supervisor</button>
       <div style="width:1px;height:13px;background:rgba(255,255,255,.1);margin:0 2px;"></div>
-      <button id="btn-end-shift" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(220,38,38,.18);border:1px solid rgba(220,38,38,.32);color:#fca5a5;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">End Shift</button>
+      <button type="button" id="btn-end-shift" onclick="headerOpenEndShift()" class="hdr-act" style="font-size:10px;padding:3px 11px;border-radius:4px;background:rgba(220,38,38,.18);border:1px solid rgba(220,38,38,.32);color:#fca5a5;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.06em;transition:all .15s;">End Shift</button>
     </div>
 
   </div>
@@ -1902,6 +1966,52 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
   </div>
 </div>
 
+<!-- Recent Transactions (today, all methods) -->
+<div id="recent-tx-modal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('recent-tx-modal').classList.add('hidden')"></div>
+  <div class="absolute inset-0 overflow-y-auto flex items-start justify-center px-4 py-6">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto" style="font-family:'Inter',sans-serif;">
+
+      <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50 rounded-t-2xl">
+        <div>
+          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">Recent Transactions &mdash; Today</div>
+          <div class="text-[11px] text-gray-400" id="rtx-subtitle">All payment methods</div>
+        </div>
+        <button onclick="document.getElementById('recent-tx-modal').classList.add('hidden')" class="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200"><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div class="px-5 py-4">
+        <div id="rtx-loading" class="py-10 text-center text-sm text-gray-400">Loading…</div>
+        <div id="rtx-error" class="hidden py-6 text-center text-sm text-red-500"></div>
+        <div id="rtx-content" class="hidden">
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-gray-100 text-gray-500 text-[10px] uppercase tracking-wide">
+                  <th class="text-left px-3 py-2 font-bold">Time</th>
+                  <th class="text-left px-3 py-2 font-bold">Payer</th>
+                  <th class="text-center px-3 py-2 font-bold">Items</th>
+                  <th class="text-left px-3 py-2 font-bold">Payment</th>
+                  <th class="text-right px-3 py-2 font-bold">Amount</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody id="rtx-rows"></tbody>
+            </table>
+          </div>
+          <div id="rtx-empty" class="hidden py-8 text-center text-sm text-gray-400">No transactions recorded today.</div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-5 py-3 border-t bg-gray-50 rounded-b-2xl">
+        <div class="text-[11px] text-gray-500" id="rtx-footer-note">Click a row to open its official receipt.</div>
+        <div class="text-sm font-bold text-gray-700" id="rtx-grand">BZD $0.00</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- Daily Cash Sales / Generate Pay-In -->
 <div id="day-sales-modal" class="fixed inset-0 z-50 hidden">
   <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('day-sales-modal').classList.add('hidden')"></div>
@@ -2233,17 +2343,19 @@ body{font-family:'Inter',sans-serif;margin:0;overflow-y:auto;overflow-x:hidden;b
 </div>
 
 <script>
-var SELF_URL        = '<?= url('views/pay-in/pos-terminal.php') ?>';
-var SHIFT_START_URL = '<?= url('views/pay-in/pos-shift-start.php') ?>';
-var SHIFT_ID        = '<?= $shiftId ?>';
-var CASHIER_NAME         = '<?= htmlspecialchars($userName) ?>';
-var BRANCH_NAME          = '<?= htmlspecialchars($branchName) ?>';
-var TERMINAL_NAME        = '<?= htmlspecialchars($terminalName) ?>';
+console.log('%cPOS terminal build: my-sales+recent+receipt (2026-06-15)', 'color:#16a34a;font-weight:bold');
+var SELF_URL        = <?= json_encode(url('views/pay-in/pos-terminal.php'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var SHIFT_START_URL = <?= json_encode(url('views/pay-in/pos-shift-start.php'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var POS_RECEIPT_URL = <?= json_encode(url('views/pay-in/pos-receipt.php'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var SHIFT_ID        = <?= json_encode((string)$shiftId, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var CASHIER_NAME         = <?= json_encode($userName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var BRANCH_NAME          = <?= json_encode($branchName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var TERMINAL_NAME        = <?= json_encode($terminalName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 var SHIFT_COST_CENTER_ID = <?= !empty($activeShift['cost_center_id']) ? (int)$activeShift['cost_center_id'] : 'null' ?>;
 var SHIFT_BANK_ACCOUNT_ID = <?= !empty($activeShift['bank_account_id']) ? (int)$activeShift['bank_account_id'] : 'null' ?>;
-var SHIFT_COST_CENTER_NAME = '<?= htmlspecialchars($shiftCostCenterName) ?>';
-var SHIFT_BANK_ACCOUNT_NAME = '<?= htmlspecialchars($shiftBankName) ?>';
-var CUSTOMER_PROFILE_URL = '<?= url('views/cashiering/master-data/customers/details.php') ?>';
+var SHIFT_COST_CENTER_NAME = <?= json_encode($shiftCostCenterName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var SHIFT_BANK_ACCOUNT_NAME = <?= json_encode($shiftBankName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var CUSTOMER_PROFILE_URL = <?= json_encode(url('views/cashiering/master-data/customers/details.php'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
 // Live sync clock
 (function() {
@@ -2283,6 +2395,47 @@ function apiPost(data) {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(data)
   }).then(function(r) { return r.json(); });
+}
+
+function headerOpenTotals() {
+  if (typeof openPinModal === 'function') {
+    openPinModal('totals', 'Enter supervisor PIN to view session totals');
+    return;
+  }
+  if (typeof _pinBuffer !== 'undefined') _pinBuffer = '';
+  if (typeof _pinTarget !== 'undefined') _pinTarget = 'totals';
+  if (typeof updatePinDots === 'function') updatePinDots();
+  var err = document.getElementById('pin-error');
+  var subtitle = document.getElementById('pin-modal-subtitle');
+  var modal = document.getElementById('pin-modal');
+  if (err) err.classList.add('hidden');
+  if (subtitle) subtitle.textContent = 'Enter supervisor PIN to view session totals';
+  if (modal) modal.classList.remove('hidden');
+}
+
+function headerOpenEndShift() {
+  var modal = document.getElementById('end-shift-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function headerOpenDaySales() {
+  var modal = document.getElementById('day-sales-modal');
+  if (modal) modal.classList.remove('hidden');
+  if (typeof openDaySalesModal === 'function') {
+    openDaySalesModal();
+    return;
+  }
+  if (typeof loadDailySales === 'function') {
+    loadDailySales();
+  }
+}
+
+function headerOpenRecentTransactions() {
+  var modal = document.getElementById('recent-tx-modal');
+  if (modal) modal.classList.remove('hidden');
+  if (typeof loadRecentTransactions === 'function') {
+    loadRecentTransactions();
+  }
 }
 
 // ---- State ----
@@ -4247,6 +4400,12 @@ validateCheckout = function() {
 };
 
 showReceipt = function(tx, items, payer) {
+  // Finalized receipts now open as a dedicated page with a success banner,
+  // instead of an in-terminal modal.
+  if (tx && tx.transaction_id) {
+    window.location.href = POS_RECEIPT_URL + '?tx=' + encodeURIComponent(tx.transaction_id) + '&new=1';
+    return;
+  }
   var now = new Date();
   function pad2(n) { return n < 10 ? '0'+n : ''+n; }
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -5187,6 +5346,13 @@ function dsFmtTime(dt) {
   return (h < 10 ? '0'+h : h) + ':' + tp[1] + ' ' + ap;
 }
 
+function openDaySalesModal() {
+  var modal = document.getElementById('day-sales-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  loadDailySales();
+}
+
 function loadDailySales() {
   document.getElementById('ds-loading').classList.remove('hidden');
   document.getElementById('ds-content').classList.add('hidden');
@@ -5246,9 +5412,52 @@ function loadDailySales() {
   });
 }
 
-document.getElementById('btn-day-sales').addEventListener('click', function() {
-  document.getElementById('day-sales-modal').classList.remove('hidden');
-  loadDailySales();
+// ---- Recent Transactions (today, all methods) ----
+function loadRecentTransactions() {
+  document.getElementById('rtx-loading').classList.remove('hidden');
+  document.getElementById('rtx-content').classList.add('hidden');
+  document.getElementById('rtx-error').classList.add('hidden');
+
+  apiPost({action: 'recent_transactions'}).then(function(d) {
+    document.getElementById('rtx-loading').classList.add('hidden');
+    if (!d.success) {
+      var errEl = document.getElementById('rtx-error');
+      errEl.textContent = d.message || 'Failed to load recent transactions.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('rtx-grand').textContent = 'BZD $' + (parseFloat(d.grand_total)||0).toFixed(2);
+    var txs = d.transactions || [];
+    var rows = '';
+    for (var i = 0; i < txs.length; i++) {
+      var t = txs[i];
+      var methods = (t.methods || []).map(function(m){ return fmtMethod(m); }).join(', ') || '—';
+      var payer = t.customer_name || t.dept_name || 'Walk-in';
+      var url = POS_RECEIPT_URL + '?tx=' + encodeURIComponent(t.uuid);
+      rows += '<tr class="border-t border-gray-100 hover:bg-emerald-50 cursor-pointer" onclick="window.open(\'' + url + '\',\'_blank\')">'
+            + '<td class="px-3 py-2 whitespace-nowrap text-xs">' + dsFmtTime(t.created_at) + '</td>'
+            + '<td class="px-3 py-2 text-xs">' + escHtml(payer) + '</td>'
+            + '<td class="px-3 py-2 text-center text-xs">' + (t.item_count || 0) + '</td>'
+            + '<td class="px-3 py-2 text-xs">' + escHtml(methods) + '</td>'
+            + '<td class="px-3 py-2 text-right text-xs font-semibold">BZD $' + (parseFloat(t.total_amount)||0).toFixed(2) + '</td>'
+            + '<td class="px-3 py-2 text-right"><span class="text-[11px] text-emerald-600 font-semibold">Receipt &#8599;</span></td>'
+            + '</tr>';
+    }
+    document.getElementById('rtx-rows').innerHTML = rows;
+    document.getElementById('rtx-empty').classList.toggle('hidden', txs.length > 0);
+    document.getElementById('rtx-content').classList.remove('hidden');
+  }).catch(function() {
+    document.getElementById('rtx-loading').classList.add('hidden');
+    var errEl = document.getElementById('rtx-error');
+    errEl.textContent = 'Network error loading recent transactions.';
+    errEl.classList.remove('hidden');
+  });
+}
+
+document.getElementById('btn-recent-tx').addEventListener('click', function() {
+  document.getElementById('recent-tx-modal').classList.remove('hidden');
+  loadRecentTransactions();
 });
 
 document.getElementById('btn-generate-payin').addEventListener('click', function() {
